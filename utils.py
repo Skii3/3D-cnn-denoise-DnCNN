@@ -72,13 +72,13 @@ def load_data(rel_file_path = './traindata/',
                     #scipy.misc.imsave(traindata_save + '/%d_%d_%d_labeldata.jpg' % (i, j, k), train_temp[0, :, :])
 
                     # third add noise
-                   # noise_aug = random.randint(1,2)
-                   # if noise_aug == 1:
-                   #     ref_value = np.max(np.abs(train_temp))
-                   #     noise_temp = train_temp + np.random.normal(0, random.randint(1, 20) * 1e-2 * ref_value, train_temp.shape)
-                   # elif noise_aug == 2:
-                    ref_value = np.mean(np.abs(train_temp))
-                    noise_temp = train_temp + np.random.normal(0, random.randint(1, 20) * 1e-1 * ref_value,
+                    noise_aug = random.randint(1,2)
+                    if noise_aug == 1:
+                        ref_value = np.max(np.abs(train_temp))
+                        noise_temp = train_temp + np.random.normal(0, random.randint(1, 20) * 1e-2 * ref_value, train_temp.shape)
+                    elif noise_aug == 2:
+                        ref_value = np.mean(np.abs(train_temp))
+                        noise_temp = train_temp + np.random.normal(0, random.randint(1, 25) * 1e-1 * ref_value,
                                                                    train_temp.shape)
 
                     train_data_noise.append(noise_temp)

@@ -1,9 +1,10 @@
 import tensorflow as tf
-from keras.models import Sequential
-from keras.layers.core import Activation
-from keras.layers.convolutional import Conv3D
-from keras.layers.normalization import BatchNormalization
-from keras.callbacks import ModelCheckpoint
+from tensorflow.python.training import moving_averages
+from tensorflow.python.ops import control_flow_ops
+import math
+BN_DECAY = 0.9997
+BN_EPSILON = 0.001
+UPDATE_OPS_COLLECTION = 'update_ops'
 
 class unet_3d_model(object):
     def __init__(self,
@@ -22,81 +23,121 @@ class unet_3d_model(object):
         self.stride = stride
         self.epochs = epochs
 
-    def build_model(self,input, target):
+    def build_model(self,input, target, is_training):
 
-        conv1 = self.conv3d(input,self.kernel_size,self.in_channel,self.num_filter,'conv1')
-        relu1 = tf.nn.relu(conv1)
+        bn_select = 2
+        conv = self.conv3d(input,self.kernel_size,self.in_channel,self.num_filter,'conv1')
+        relu = tf.nn.relu(conv)
 
-        conv2 = self.conv3d(relu1,self.kernel_size,self.num_filter,self.num_filter,'conv2')
-        bn2 = self.batchnorm(conv2,'bn2')
-        relu2 = tf.nn.relu(bn2)
+        conv = self.conv3d(relu,self.kernel_size,self.num_filter,self.num_filter,'conv2')
+        if bn_select == 1:
+            bn = self.batchnorm(conv,'bn2')
+        else:
+            bn = self.bn(conv,is_training,'bn2')
+        relu = tf.nn.relu(bn)
 
-        conv3 = self.conv3d(relu2,self.kernel_size,self.num_filter,self.num_filter,'conv3')
-        bn3 = self.batchnorm(conv3,'bn3')
-        relu3 = tf.nn.relu(bn3)
+        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv3')
+        if bn_select == 1:
+            bn = self.batchnorm(conv, 'bn3')
+        else:
+            bn = self.bn(conv, is_training, 'bn3')
+        relu = tf.nn.relu(bn)
 
-        conv4 = self.conv3d(relu3,self.kernel_size,self.num_filter,self.num_filter,'conv4')
-        bn4 = self.batchnorm(conv4,'bn4')
-        relu4 = tf.nn.relu(bn4)
+        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv4')
+        if bn_select == 1:
+            bn = self.batchnorm(conv, 'bn4')
+        else:
+            bn = self.bn(conv, is_training, 'bn4')
+        relu = tf.nn.relu(bn)
 
-        conv5 = self.conv3d(relu4,self.kernel_size,self.num_filter,self.num_filter,'conv5')
-        bn5 = self.batchnorm(conv5,'bn5')
-        relu5 = tf.nn.relu(bn5)
+        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv5')
+        if bn_select == 1:
+            bn = self.batchnorm(conv, 'bn5')
+        else:
+            bn = self.bn(conv, is_training, 'bn5')
+        relu = tf.nn.relu(bn)
 
-        conv6 = self.conv3d(relu5,self.kernel_size,self.num_filter,self.num_filter,'conv6')
-        bn6 = self.batchnorm(conv6,'bn6')
-        relu6 = tf.nn.relu(bn6)
+        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv6')
+        if bn_select == 1:
+            bn = self.batchnorm(conv, 'bn6')
+        else:
+            bn = self.bn(conv, is_training, 'bn6')
+        relu = tf.nn.relu(bn)
 
-        conv7 = self.conv3d(relu6,self.kernel_size,self.num_filter,self.num_filter,'conv7')
-        bn7 = self.batchnorm(conv7,'bn7')
-        relu7 = tf.nn.relu(bn7)
+        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv7')
+        if bn_select == 1:
+            bn = self.batchnorm(conv, 'bn7')
+        else:
+            bn = self.bn(conv, is_training, 'bn7')
+        relu = tf.nn.relu(bn)
 
-        conv8 = self.conv3d(relu7,self.kernel_size,self.num_filter,self.num_filter,'conv8')
-        bn8 = self.batchnorm(conv8,'bn8')
-        relu8 = tf.nn.relu(bn8)
+        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv8')
+        if bn_select == 1:
+            bn = self.batchnorm(conv, 'bn8')
+        else:
+            bn = self.bn(conv, is_training, 'bn8')
+        relu = tf.nn.relu(bn)
 
-        conv9 = self.conv3d(relu8,self.kernel_size,self.num_filter,self.num_filter,'conv9')
-        bn9 = self.batchnorm(conv9,'bn9')
-        relu9 = tf.nn.relu(bn9)
+        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv9')
+        if bn_select == 1:
+            bn = self.batchnorm(conv, 'bn9')
+        else:
+            bn = self.bn(conv, is_training, 'bn9')
+        relu = tf.nn.relu(bn)
 
-        conv10 = self.conv3d(relu9,self.kernel_size,self.num_filter,self.num_filter,'conv10')
-        bn10 = self.batchnorm(conv10,'bn10')
-        relu10 = tf.nn.relu(bn10)
+        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv10')
+        if bn_select == 1:
+            bn = self.batchnorm(conv, 'bn10')
+        else:
+            bn = self.bn(conv, is_training, 'bn10')
+        relu = tf.nn.relu(bn)
 
-        conv11 = self.conv3d(relu10,self.kernel_size,self.num_filter,self.num_filter,'conv11')
-        bn11 = self.batchnorm(conv11,'bn11')
-        relu11 = tf.nn.relu(bn11)
+        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv11')
+        if bn_select == 1:
+            bn = self.batchnorm(conv, 'bn11')
+        else:
+            bn = self.bn(conv, is_training, 'bn11')
+        relu = tf.nn.relu(bn)
 
-        conv12 = self.conv3d(relu11,self.kernel_size,self.num_filter,self.num_filter,'conv12')
-        bn12 = self.batchnorm(conv12,'bn12')
-        relu12 = tf.nn.relu(bn12)
+        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv12')
+        if bn_select == 1:
+            bn = self.batchnorm(conv, 'bn12')
+        else:
+            bn = self.bn(conv, is_training, 'bn12')
+        relu = tf.nn.relu(bn)
 
-        output = self.conv3d(relu12,self.kernel_size,self.num_filter,self.in_channel,'conv13')
+        output = self.conv3d(relu,self.kernel_size,self.num_filter,self.in_channel,'conv13')
 
         L1_loss_forward = tf.reduce_mean(tf.abs(output - target))
         pixel_num = self.input_size[0] * self.input_size[1]
-        output_flatten = tf.reduce_sum(output,axis=3)
-        tvDiff_loss_forward = \
-            tf.reduce_mean(tf.image.total_variation(output_flatten)) / pixel_num * 200 / 10000
-        '''
-        for i in range(self.input_size[2]):
+        #output_flatten = tf.reduce_sum(output,axis=3)
+        #tvDiff_loss_forward = \
+        #    tf.reduce_mean(tf.image.total_variation(output_flatten)) / pixel_num * 200 / 10000
+
+        for i in range(self.input_size[3]):
             if i == 0:
                 tvDiff_loss_forward = \
                 tf.reduce_mean(tf.image.total_variation(output[:, :, :, i, :])) / pixel_num * 200 / 10000
             else:
                 tvDiff_loss_forward = tvDiff_loss_forward + \
-                                      tf.reduce_mean(tf.image.total_variation(output[:,:,:,i,:])) / pixel_num  * 200 / 10000
-        '''
+                                      tf.reduce_mean(tf.image.total_variation(output[:,:,:,i,:])) / pixel_num * 200 / 10000
+        tvDiff_loss_forward = tvDiff_loss_forward / self.input_size[3]
         loss = L1_loss_forward + tvDiff_loss_forward
         snr = self.snr(output,target)
-
-        return output,loss,L1_loss_forward,tvDiff_loss_forward,snr
+        with tf.name_scope('summaries'):
+            tf.summary.scalar('all loss', loss)
+            tf.summary.scalar('L1_loss',L1_loss_forward)
+            tf.summary.scalar('tv_loss',tvDiff_loss_forward)
+            tf.summary.scalar('snr',snr)
+        return output,L1_loss_forward,L1_loss_forward,tvDiff_loss_forward,snr
 
     def batchnorm(self,input, name):
         with tf.variable_scope(name):
             input = tf.identity(input)
-            channels = input.get_shape()[4]
+            channels = input.get_shape()[-1:]
             offset = tf.get_variable("offset", [channels], dtype=tf.float32, initializer=tf.zeros_initializer(), trainable=True)
+
+
             scale = tf.get_variable("scale", [channels], dtype=tf.float32,
                                     initializer=tf.random_normal_initializer(1, 0.02),trainable=True)
             mean, variance = tf.nn.moments(input, axes=[0, 1, 2, 3], keep_dims=False)
@@ -104,6 +145,37 @@ class unet_3d_model(object):
             normalized = tf.nn.batch_normalization(input, mean, variance, offset, scale,
                                                  variance_epsilon=variance_epsilon)
         return normalized
+
+    def bn(self,x,is_training,name):
+        with tf.variable_scope(name):
+            x_shape = x.get_shape()
+            params_shape = x_shape[-1:]
+
+            axis = list(range(len(x_shape) - 1))
+
+            beta = tf.get_variable('beta', params_shape, dtype=tf.float32, initializer=tf.zeros_initializer())
+            gamma = tf.get_variable('gamma', params_shape, dtype=tf.float32, initializer=tf.ones_initializer())
+
+            moving_mean = tf.get_variable('moving_mean', params_shape, initializer=tf.zeros_initializer(), trainable=False)
+            moving_variance = tf.get_variable('moving_variance', params_shape, initializer=tf.ones_initializer(), trainable=False)
+
+            # these op will only be performed when traing
+            mean, variance = tf.nn.moments(x, axis)
+            update_moving_mean = moving_averages.assign_moving_average(moving_mean, mean, BN_DECAY)
+            update_moving_variance = moving_averages.assign_moving_average(moving_variance, variance, BN_DECAY)
+            tf.add_to_collection(UPDATE_OPS_COLLECTION, update_moving_mean)
+            tf.add_to_collection(UPDATE_OPS_COLLECTION, update_moving_variance)
+
+            is_training2 = tf.convert_to_tensor(is_training,dtype='bool',name='is_training')
+
+            mean, variance = control_flow_ops.cond(is_training2, lambda :(mean,variance), lambda :(moving_mean,moving_variance))
+
+            x = tf.nn.batch_normalization(x,mean,variance,beta,gamma,BN_EPSILON)
+        self.variable_summaries(beta)
+        self.variable_summaries(gamma)
+
+        return x
+
 
     def snr(self,y,y_true):
         tmp_snr = tf.reduce_sum(tf.square(tf.abs(y_true))) / tf.reduce_sum(tf.square(tf.abs(y_true - y)))
@@ -114,6 +186,7 @@ class unet_3d_model(object):
         with tf.variable_scope(name):
             kernel = tf.get_variable('kernel', [k,k,k,in_channel,out_channel],
                                      dtype=tf.float32, initializer=tf.random_normal_initializer(0,0.02),trainable=True)
+            self.variable_summaries(kernel)
             conv = tf.nn.conv3d(x,kernel,strides=[1,1,1,1,1],padding="SAME")
         return conv
 
@@ -128,26 +201,13 @@ class unet_3d_model(object):
         out = tf.Variable(tf.zeros(input_size),name="biases")
         return out
 
-    def train_model(self,model,train_data,train_label,real_epochs):
-
-        model_checkpoint = ModelCheckpoint('unet.hdf5',
-                                           monitor='loss',
-                                           save_best_only=True)
-        train_hist = model.fit(train_data,train_label,
-                               batch_size=self.batch_size,
-                               epochs=self.epochs,
-                               validation_split=0.1,
-                               shuffle=True,
-                               callbacks=[model_checkpoint],
-                               verbose=1)
-        if real_epochs == 1:
-            print "[*] saving model weights"
-            model.save_weights('model_weights.h5',overwrite=True)
-
-        return model,train_hist
-
-    def test_model(self,model,test_data):
-        model.load_weights('model_weights.h5')
-        print "[*] begin to test learned model"
-        denoised = model.predict(test_data,verbose=1)
-        return denoised
+    def variable_summaries(self,var):
+        with tf.name_scope('summaries'):
+            mean = tf.reduce_mean(var)
+            tf.summary.scalar('mean', mean)
+            with tf.name_scope('stddev'):
+                stddev = tf.sqrt(tf.reduce_mean(tf.square(tf.subtract(var,mean))))
+            tf.summary.scalar('stddev', stddev)
+            tf.summary.scalar('max', tf.reduce_max(var))
+            tf.summary.scalar('min', tf.reduce_min(var))
+            tf.summary.histogram('histogram', var)
