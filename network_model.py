@@ -25,7 +25,7 @@ class unet_3d_model(object):
 
     def build_model(self,input, target, is_training):
 
-        bn_select = 0
+        bn_select = 2
         conv = self.conv3d(input,self.kernel_size,self.in_channel,self.num_filter,'conv1')
         relu = tf.nn.relu(conv)
 
