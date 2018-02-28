@@ -23,9 +23,8 @@ class unet_3d_model(object):
         self.stride = stride
         self.epochs = epochs
 
-    def build_model(self,input, target, is_training):
+    def build_model(self,input, target, is_training,bn_select):
 
-        bn_select = 2
         conv = self.conv3d(input,self.kernel_size,self.in_channel,self.num_filter,'conv1')
         relu = tf.nn.relu(conv)
 

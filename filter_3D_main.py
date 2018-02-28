@@ -24,6 +24,7 @@ step_decay = 1000
 decay_rate = 0.5
 lr = 1e-3
 beta1 = 0.5
+bn_select = 0
 batch_size = 40
 kernel_size = 4
 n_kernel = 13
@@ -50,7 +51,8 @@ input = tf.placeholder('float32', [None, patch_size[0], patch_size[1], patch_siz
 target = tf.placeholder('float32', [None, patch_size[0], patch_size[1], patch_size[2], 1], name='target')
 
 if mode == 'train':
-        print "tv + l1 loss, conv"+str(n_kernel)+", without bn"
+        print "tv + l1 loss, conv"+str(n_kernel)
+        print "bn_select:",bn_select
         print "start point without random"
         print "end_point:",end_point
         print "stride:",stride
@@ -64,7 +66,7 @@ if mode == 'train':
         print "num_filter:",num_filter
         print "kernel_size:",kernel_size
 
-        output, loss, l1_loss, tv_loss, snr = CNNclass.build_model(input, target, True)
+        output, loss, l1_loss, tv_loss, snr = CNNclass.build_model(input, target, True,bn_select)
 
         global_step = tf.Variable(0, trainable=False)
         learning_rate = tf.train.exponential_decay(lr, global_step,
@@ -75,6 +77,7 @@ if mode == 'train':
         optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
         optim_forward = optimizer.minimize(loss, global_step=global_step)
 
+        var = tf.trainable_variables()
         with tf.name_scope('summaries'):
             tf.summary.scalar('learning rate',learning_rate)
         sess = tf.Session()
@@ -100,7 +103,7 @@ if mode == 'train':
         print("---------------------------training model---------------------------")
         for epoch in range(0, max_epochs + 1):
             g = tf.get_default_graph()
-            kernelshow(g, n_kernel, sess, epoch)
+            kernelshow(g, n_kernel, sess, epoch,bn_select)
             if (epoch) % 1 == 0:
                 ind = np.arange(np.shape(data_epoch)[0])
                 ind = np.random.permutation(ind)
@@ -171,7 +174,7 @@ elif mode == 'test':
         plt.show()
 elif mode == 'onetest':
 
-    output,_,_,_,_ = CNNclass.build_model(input, target, True)
+    output,_,_,_,_ = CNNclass.build_model(input, target, True,bn_select)
 
     _, _, test_data = load_data(rel_file_path=REL_FILE_PATH,
                                 start_point=start_point,
@@ -265,13 +268,13 @@ elif mode == 'onetest':
 
     print 'ok'
 elif mode == 'show_kernel':
-    CNNclass.build_model(input, target, True)
+    CNNclass.build_model(input, target, True,bn_select)
     sess = tf.Session()
     ckpt = tf.train.get_checkpoint_state('./model_save/')
     tf.train.Saver().restore(sess, ckpt.model_checkpoint_path)
     g = tf.get_default_graph()
 
-    kernelshow(g, n_kernel, sess,1)
+    kernelshow(g, n_kernel, sess,1,bn_select)
 
     print 'ok'
 

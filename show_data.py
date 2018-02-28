@@ -4,7 +4,7 @@ import scipy
 import math
 
 
-def kernelshow(g,n_kernel,sess,epoch):
+def kernelshow(g,n_kernel,sess,epoch,bn_select):
     kernel_all = []
     min_all = 100
     for k in range(n_kernel):
@@ -68,28 +68,29 @@ def kernelshow(g,n_kernel,sess,epoch):
 
         scipy.misc.imsave('./kernel_save' + '/%dkernel_%diter.png' % (k, epoch), kernel_show)
 
-    beta_all = []
-    gamma_all = []
-    for k in range(2,n_kernel,1):
-        beta = sess.run(g.get_tensor_by_name('bn' + str(k) + '/beta:0'))
-        gamma = sess.run(g.get_tensor_by_name('bn' + str(k) + '/gamma:0'))
-        beta_all.append(beta)
-        gamma_all.append(gamma)
+    if bn_select != 0:
+        beta_all = []
+        gamma_all = []
+        for k in range(2,n_kernel,1):
+            beta = sess.run(g.get_tensor_by_name('bn' + str(k) + '/beta:0'))
+            gamma = sess.run(g.get_tensor_by_name('bn' + str(k) + '/gamma:0'))
+            beta_all.append(beta)
+            gamma_all.append(gamma)
 
-    beta_all = np.array(beta_all)
-    gamma_all = np.array(gamma_all)
-    scale = 5
-    beta_show = np.zeros([np.shape(beta_all)[0] * scale, np.shape(beta_all)[1] * scale])
-    for ii in range(np.shape(beta_all)[0]):
-        for jj in range(np.shape(beta_all)[1]):
-            beta_show[ii * scale:(ii + 1) * scale, jj * scale:(jj + 1) * scale] = beta_all[ii, jj]
+        beta_all = np.array(beta_all)
+        gamma_all = np.array(gamma_all)
+        scale = 5
+        beta_show = np.zeros([np.shape(beta_all)[0] * scale, np.shape(beta_all)[1] * scale])
+        for ii in range(np.shape(beta_all)[0]):
+            for jj in range(np.shape(beta_all)[1]):
+                beta_show[ii * scale:(ii + 1) * scale, jj * scale:(jj + 1) * scale] = beta_all[ii, jj]
 
-    scipy.misc.imsave('./kernel_save' + '/%dbeta_%diter.png' % (k, epoch), beta_show)
+        scipy.misc.imsave('./kernel_save' + '/%dbeta_%diter.png' % (k, epoch), beta_show)
 
-    gamma_show = np.zeros([np.shape(gamma_all)[0] * scale, np.shape(gamma_all)[1] * scale])
-    for ii in range(np.shape(gamma_all)[0]):
-        for jj in range(np.shape(gamma_all)[1]):
-            gamma_show[ii * scale:(ii + 1) * scale, jj * scale:(jj + 1) * scale] = gamma_all[ii, jj]
+        gamma_show = np.zeros([np.shape(gamma_all)[0] * scale, np.shape(gamma_all)[1] * scale])
+        for ii in range(np.shape(gamma_all)[0]):
+            for jj in range(np.shape(gamma_all)[1]):
+                gamma_show[ii * scale:(ii + 1) * scale, jj * scale:(jj + 1) * scale] = gamma_all[ii, jj]
 
-    scipy.misc.imsave('./kernel_save' + '/%dgamma_%diter.png' % (k, epoch), gamma_show)
+        scipy.misc.imsave('./kernel_save' + '/%dgamma_%diter.png' % (k, epoch), gamma_show)
 
