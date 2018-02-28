@@ -23,11 +23,12 @@ beta1 = 0.5
 batch_size = 40
 kernel_size = 4
 num_filter = 16
-mode = 'train'
+mode = 'onetest'
 if mode == 'train':
     patch_size = [40, 40, 40]
-elif mode == 'test':
-    patch_size = [150, 150, 150]
+else:
+    patch_size = [40, 40, 40]
+    batch_size = 40
 #------------------ global settings ------------------#
 
 tf.device('/gpu:0')
@@ -45,7 +46,15 @@ target = tf.placeholder('float32', [None, patch_size[0], patch_size[1], patch_si
 if mode == 'train':
         print "L1_loss only, conv13"
         print "start point without random"
-        print end_point, stride, max_epochs, lr, beta1, batch_size, patch_size, num_filter, kernel_size
+        print "end_point:",end_point
+        print "stride:",stride
+        print "max_epochs:",max_epochs
+        print "lr:",lr
+        print "beta1:",beta1
+        print "batch_size:",batch_size
+        print "patch_size:",patch_size
+        print "num_filter:",num_filter
+        print "kernel_size:",kernel_size
 
         output, loss, l1_loss, tv_loss, snr = CNNclass.build_model(input, target, True)
         optim_forward = tf.train.AdamOptimizer(learning_rate=lr,beta1=beta1).minimize(loss)
@@ -143,7 +152,7 @@ elif mode == 'test':
         plt.show()
 elif mode == 'onetest':
 
-    output,_,_,_,_ = CNNclass.build_model(input, target, False)
+    output,_,_,_,_ = CNNclass.build_model(input, target, True)
 
     _, _, test_data = load_data(rel_file_path=REL_FILE_PATH,
                                 start_point=start_point,
@@ -151,11 +160,11 @@ elif mode == 'onetest':
                                 patch_size=patch_size,
                                 stride=stride,
                                 traindata_save=TRAINDATA_SAVE_PATH)
-    onedata = np.concatenate((test_data[0,:,:,:],test_data[1,:,:,:]),axis=3)    # 876*900*160
+    onedata = np.concatenate((test_data[0,:,:,:],test_data[1,:,:,:]),axis=2)    # 876*900*160
     onedata_test = onedata[:,:,:patch_size[2]]
 
     ref_value = np.max(np.abs(onedata_test))
-    onedata_test_noise = onedata_test + np.random.normal(0, random.randint(1, 20) * 1e-2 * ref_value, onedata_test.shape)
+    onedata_test_noise = onedata_test + np.random.normal(0, random.randint(1, 25) * 1e-2 * ref_value, onedata_test.shape)
 
     onedata_test_extract = []
     for i in range(0,np.shape(onedata_test)[0]-patch_size[0]+1,patch_size[0]):
@@ -180,7 +189,17 @@ elif mode == 'onetest':
             onedata_test_extract.append(temp_noise)
 
     sess = tf.Session()
-    denoise = sess.run(output,feed_dict={input:onedata_test_extract})
+    ckpt = tf.train.get_checkpoint_state('./model_save/')
+    tf.train.Saver().restore(sess, ckpt.model_checkpoint_path)
+    onedata_test_extract = np.expand_dims(onedata_test_extract,axis=4)
+    denoise = np.zeros(np.shape(onedata_test_extract))
+    for i in range(np.shape(onedata_test)[0] // batch_size):
+        denoise[i*batch_size:(i+1)*batch_size,:,:,:,:] = \
+            sess.run(output,feed_dict={input:onedata_test_extract[i*batch_size:(i+1)*batch_size,:,:,:,:]})
+    if np.shape(onedata_test)[0] % batch_size != 0:
+        denoise[np.shape(onedata_test)[0] // batch_size * batch_size:, :, :, :, :] = \
+            sess.run(output, feed_dict\
+            ={input: onedata_test_extract[np.shape(onedata_test)[0] // batch_size * batch_size, :, :, :, :]})
 
     count = 0
     denoise_onedata = np.zeros(np.shape(onedata_test))
@@ -213,9 +232,10 @@ elif mode == 'onetest':
     plt.imshow(onedata_test_noise[:,:,0])
     plt.title('noisedata')
 
-    scipy.misc.imsave('./test_result' + '/label.png', onedata_test[:,:,0])
-    scipy.misc.imsave('./test_result' + '/denoised.png', denoise_onedata[:,:,0])
-    scipy.misc.imsave('./test_result' + '/noisedata.png', onedata_test_noise[:, :, 0])
+    for i in range(np.shape(onedata_test)[2]):
+        scipy.misc.imsave('./test_result' + '/%dlabel.png'%i, onedata_test[:,:,i])
+        scipy.misc.imsave('./test_result' + '/%ddenoised.png'%i, denoise_onedata[:,:,i])
+        scipy.misc.imsave('./test_result' + '/%dnoisedata.png'%i, onedata_test_noise[:, :, i])
 
     print 'ok'
 elif mode == 'show_kernel':
