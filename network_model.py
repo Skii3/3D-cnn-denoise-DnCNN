@@ -25,85 +25,107 @@ class unet_3d_model(object):
 
     def build_model(self,input, target, is_training):
 
-        bn_select = 2
+        bn_select = 0
         conv = self.conv3d(input,self.kernel_size,self.in_channel,self.num_filter,'conv1')
         relu = tf.nn.relu(conv)
 
         conv = self.conv3d(relu,self.kernel_size,self.num_filter,self.num_filter,'conv2')
         if bn_select == 1:
             bn = self.batchnorm(conv,'bn2')
-        else:
+        elif bn_select == 2:
             bn = self.bn(conv,is_training,'bn2')
+        else:
+            bn = conv
         relu = tf.nn.relu(bn)
 
         conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv3')
         if bn_select == 1:
             bn = self.batchnorm(conv, 'bn3')
-        else:
+        elif bn_select == 2:
             bn = self.bn(conv, is_training, 'bn3')
+        else:
+            bn = conv
         relu = tf.nn.relu(bn)
 
         conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv4')
         if bn_select == 1:
             bn = self.batchnorm(conv, 'bn4')
-        else:
+        elif bn_select == 2:
             bn = self.bn(conv, is_training, 'bn4')
+        else:
+            bn = conv
         relu = tf.nn.relu(bn)
 
         conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv5')
         if bn_select == 1:
             bn = self.batchnorm(conv, 'bn5')
-        else:
+        elif bn_select == 2:
             bn = self.bn(conv, is_training, 'bn5')
+        else:
+            bn = conv
         relu = tf.nn.relu(bn)
 
         conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv6')
         if bn_select == 1:
             bn = self.batchnorm(conv, 'bn6')
-        else:
+        elif bn_select == 2:
             bn = self.bn(conv, is_training, 'bn6')
+        else:
+            bn = conv
         relu = tf.nn.relu(bn)
 
         conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv7')
         if bn_select == 1:
             bn = self.batchnorm(conv, 'bn7')
-        else:
+        elif bn_select == 2:
             bn = self.bn(conv, is_training, 'bn7')
+        else:
+            bn = conv
         relu = tf.nn.relu(bn)
 
         conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv8')
         if bn_select == 1:
             bn = self.batchnorm(conv, 'bn8')
-        else:
+        elif bn_select == 2:
             bn = self.bn(conv, is_training, 'bn8')
+        else:
+            bn = conv
         relu = tf.nn.relu(bn)
 
         conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv9')
         if bn_select == 1:
             bn = self.batchnorm(conv, 'bn9')
-        else:
+        elif bn_select == 2:
             bn = self.bn(conv, is_training, 'bn9')
+        else:
+            bn = conv
         relu = tf.nn.relu(bn)
 
         conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv10')
         if bn_select == 1:
             bn = self.batchnorm(conv, 'bn10')
-        else:
+        elif bn_select == 2:
             bn = self.bn(conv, is_training, 'bn10')
+        else:
+            bn = conv
         relu = tf.nn.relu(bn)
 
         conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv11')
         if bn_select == 1:
             bn = self.batchnorm(conv, 'bn11')
-        else:
+        elif bn_select == 2:
             bn = self.bn(conv, is_training, 'bn11')
+        else:
+            bn = conv
         relu = tf.nn.relu(bn)
 
         conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv12')
         if bn_select == 1:
             bn = self.batchnorm(conv, 'bn12')
-        else:
+        elif bn_select == 2:
             bn = self.bn(conv, is_training, 'bn12')
+        else:
+            bn = conv
         relu = tf.nn.relu(bn)
 
         output = self.conv3d(relu,self.kernel_size,self.num_filter,self.in_channel,'conv13')
@@ -200,7 +222,7 @@ class unet_3d_model(object):
     def conv3d(self,x,k,in_channel,out_channel,name):
         with tf.variable_scope(name):
             kernel = tf.get_variable('kernel', [k,k,k,in_channel,out_channel],
-                                     dtype=tf.float32, initializer=tf.random_normal_initializer(0,0.02),trainable=True)
+                                     dtype=tf.float32, initializer=tf.random_normal_initializer(0,0.05),trainable=True)
             self.variable_summaries(kernel)
             conv = tf.nn.conv3d(x,kernel,strides=[1,1,1,1,1],padding="SAME")
         return conv
