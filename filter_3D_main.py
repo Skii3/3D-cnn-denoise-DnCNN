@@ -29,7 +29,7 @@ kernel_size = 4
 n_kernel = 13
 num_filter = 16
 # train/test/onetest/show_kernel
-mode = 'show_kernel'
+mode = 'train'
 if mode == 'train':
     patch_size = [40, 40, 40]
 else:
@@ -99,7 +99,8 @@ if mode == 'train':
 
         print("---------------------------training model---------------------------")
         for epoch in range(0, max_epochs + 1):
-
+            g = tf.get_default_graph()
+            kernelshow(g, n_kernel, sess, epoch)
             if (epoch) % 1 == 0:
                 ind = np.arange(np.shape(data_epoch)[0])
                 ind = np.random.permutation(ind)
@@ -142,11 +143,6 @@ if mode == 'train':
             print ("[*] Epoch [%2d/%2d] %4d time: %4.4fs, sum all loss: %.8f, sum tvDiff loss: %.8f, sum l1 loss: %.8f, sum snr: %.8f") \
                   % (epoch+1,max_epochs,np.shape(data_epoch)[0] // batch_size,
                      time.time()-epoch_time,sum_all_loss/n_iter,sum_tvDiff_loss/n_iter,sum_L1_loss/n_iter,sum_snr/n_iter)
-
-            g = tf.get_default_graph()
-
-            kernelshow(g, n_kernel, sess,epoch)
-
 
             if (epoch+1) % 100 == 0:
                 tf.train.Saver().save(sess, './model_save' + '/model%d' % epoch)
