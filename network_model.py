@@ -171,10 +171,10 @@ class unet_3d_model(object):
         with tf.variable_scope(name):
             input = tf.identity(input)
             channels = input.get_shape()[-1:]
-            offset = tf.get_variable("offset", [channels], dtype=tf.float32, initializer=tf.zeros_initializer(), trainable=True)
+            offset = tf.get_variable("gamma", [channels], dtype=tf.float32, initializer=tf.zeros_initializer(), trainable=True)
 
 
-            scale = tf.get_variable("scale", [channels], dtype=tf.float32,
+            scale = tf.get_variable("beta", [channels], dtype=tf.float32,
                                     initializer=tf.random_normal_initializer(1, 0.02),trainable=True)
             mean, variance = tf.nn.moments(input, axes=[0, 1, 2, 3], keep_dims=False)
             variance_epsilon = 1e-5

@@ -51,6 +51,7 @@ def kernelshow(g,n_kernel,sess,epoch,bn_select):
             temp_4 = np.concatenate((temp_4_1, temp_4_2, temp_4_3, temp_4_4),
                                     axis=0)  # (4*8)*(4*8) -> (4*4*8) * (4*4*8)
         elif np.shape(temp)[4] == 1:
+            scipy.misc.imsave('./kernel_save' + '/%dkernel_%diter.png' % (k, epoch), kernel_show)
             continue
         elif np.shape(temp)[3] == 16:
             temp_4_1 = np.concatenate((temp4[0], temp4[1], temp4[2], temp4[3]), axis=1)
@@ -85,12 +86,12 @@ def kernelshow(g,n_kernel,sess,epoch,bn_select):
             for jj in range(np.shape(beta_all)[1]):
                 beta_show[ii * scale:(ii + 1) * scale, jj * scale:(jj + 1) * scale] = beta_all[ii, jj]
 
-        scipy.misc.imsave('./kernel_save' + '/%dbeta_%diter.png' % (k, epoch), beta_show)
+        scipy.misc.imsave('./kernel_save' + '/beta_%diter.png' % (epoch), beta_show)
 
         gamma_show = np.zeros([np.shape(gamma_all)[0] * scale, np.shape(gamma_all)[1] * scale])
         for ii in range(np.shape(gamma_all)[0]):
             for jj in range(np.shape(gamma_all)[1]):
                 gamma_show[ii * scale:(ii + 1) * scale, jj * scale:(jj + 1) * scale] = gamma_all[ii, jj]
 
-        scipy.misc.imsave('./kernel_save' + '/%dgamma_%diter.png' % (k, epoch), gamma_show)
+        scipy.misc.imsave('./kernel_save' + '/gamma_%diter.png' % (epoch), gamma_show)
 

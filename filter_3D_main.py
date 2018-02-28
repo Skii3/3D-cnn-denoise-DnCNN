@@ -24,7 +24,7 @@ step_decay = 1000
 decay_rate = 0.5
 lr = 1e-3
 beta1 = 0.5
-bn_select = 0
+bn_select = 2
 batch_size = 40
 kernel_size = 4
 n_kernel = 13
@@ -99,10 +99,10 @@ if mode == 'train':
                                                     traindata_save=TRAINDATA_SAVE_PATH)
         data_epoch = np.expand_dims(data_epoch, axis=4)
         data_label_epoch = np.expand_dims(data_label_epoch, axis=4)
-
+        g = tf.get_default_graph()
         print("---------------------------training model---------------------------")
         for epoch in range(0, max_epochs + 1):
-            g = tf.get_default_graph()
+
             kernelshow(g, n_kernel, sess, epoch,bn_select)
             if (epoch) % 1 == 0:
                 ind = np.arange(np.shape(data_epoch)[0])
