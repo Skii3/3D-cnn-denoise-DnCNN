@@ -164,7 +164,7 @@ elif mode == 'onetest':
     onedata_test = onedata[:,:,:patch_size[2]]
 
     ref_value = np.max(np.abs(onedata_test))
-    onedata_test_noise = onedata_test + np.random.normal(0, random.randint(1, 25) * 1e-2 * ref_value, onedata_test.shape)
+    onedata_test_noise = onedata_test + np.random.normal(0, random.randint(1, 10) * 1e-2 * ref_value, onedata_test.shape)
 
     onedata_test_extract = []
     for i in range(0,np.shape(onedata_test)[0]-patch_size[0]+1,patch_size[0]):
@@ -199,28 +199,35 @@ elif mode == 'onetest':
     if np.shape(onedata_test)[0] % batch_size != 0:
         denoise[np.shape(onedata_test)[0] // batch_size * batch_size:, :, :, :, :] = \
             sess.run(output, feed_dict\
-            ={input: onedata_test_extract[np.shape(onedata_test)[0] // batch_size * batch_size, :, :, :, :]})
+            ={input: onedata_test_extract[np.shape(onedata_test)[0] // batch_size * batch_size:, :, :, :, :]})
 
     count = 0
     denoise_onedata = np.zeros(np.shape(onedata_test))
     for i in range(0,np.shape(onedata_test)[0]-patch_size[0]+1,patch_size[0]):
         for j in range(0,np.shape(onedata_test)[1]-patch_size[1]+1,patch_size[1]):
-            denoise_onedata = denoise[count,i:i+patch_size[0],j:j+patch_size[1],k:k+patch_size[2]]
+            denoise_onedata[i:i+patch_size[0],j:j+patch_size[1],k:k+patch_size[2]]\
+                = denoise[count,:,:,:,0]
             count = count + 1
     if np.shape(onedata_test)[0] % patch_size[0] != 0:
         for j in range(0,np.shape(onedata_test)[1]-patch_size[1]+1,patch_size[1]):
             for k in range(0,np.shape(onedata_test)[2]-patch_size[2]+1,patch_size[2]):
-                denoise_onedata = denoise[count,np.shape(onedata_test)[0]-patch_size[0]:,j:j+patch_size[1],k:k+patch_size[2]]
+                ind = np.shape(onedata_test)[0] - np.shape(onedata_test)[0] // patch_size[0] * patch_size[0]
+                denoise_onedata[-ind:,j:j+patch_size[1],k:k+patch_size[2]]\
+                    = denoise[count,-ind:,:,:,0]
                 count = count + 1
     if np.shape(onedata_test)[1] % patch_size[1] != 0:
         for i in range(0, np.shape(onedata_test)[0] - patch_size[0] + 1, patch_size[0]):
             for k in range(0,np.shape(onedata_test)[2]-patch_size[2]+1,patch_size[2]):
-                denoise_onedata = denoise[count,i:i+patch_size[0],np.shape(onedata_test)[1]-patch_size[1]:,k:k+patch_size[2]]
+                ind = np.shape(onedata_test)[1] - np.shape(onedata_test)[1] // patch_size[1] * patch_size[1]
+                denoise_onedata[i:i+patch_size[0],-ind:,k:k+patch_size[2]] \
+                    =denoise[count,:,-ind:,:,0]
                 count = count + 1
     if np.shape(onedata_test)[0] % patch_size[0] != 0 and np.shape(onedata_test)[1] % patch_size[1] != 0:
         for k in range(0, np.shape(onedata_test)[2] - patch_size[2] + 1, patch_size[2]):
-            denoise_onedata = denoise[count, np.shape(onedata_test)[0]-patch_size[0]:, np.shape(onedata_test)[1] - patch_size[1]:,
-                              k:k + patch_size[2]]
+            ind1 = np.shape(onedata_test)[0] - np.shape(onedata_test)[0] // patch_size[0] * patch_size[0]
+            ind2 = np.shape(onedata_test)[1] - np.shape(onedata_test)[1] // patch_size[1] * patch_size[1]
+            denoise_onedata[-ind1:,-ind2:,:] = \
+                denoise[count, -ind1:,-ind2:,:,0]
             count = count + 1
     plt.figure()
     plt.imshow(onedata_test[:,:,0])
