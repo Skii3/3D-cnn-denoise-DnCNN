@@ -24,157 +24,203 @@ class unet_3d_model(object):
         self.epochs = epochs
 
     def build_model(self,input, target, is_training,bn_select):
+        with tf.variable_scope('net', reuse=False) as vs:
+            conv = self.conv3d(input,self.kernel_size,self.in_channel,self.num_filter,'conv1')
+            relu = tf.nn.relu(conv)
 
-        conv = self.conv3d(input,self.kernel_size,self.in_channel,self.num_filter,'conv1')
-        relu = tf.nn.relu(conv)
-
-        conv = self.conv3d(relu,self.kernel_size,self.num_filter,self.num_filter,'conv2')
-        if bn_select == 1:
-            bn = self.batchnorm(conv,'bn2')
-        elif bn_select == 2:
-            bn = self.bn(conv,is_training,'bn2')
-        else:
-            bn = conv
-        relu = tf.nn.relu(bn)
-
-        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv3')
-        if bn_select == 1:
-            bn = self.batchnorm(conv, 'bn3')
-        elif bn_select == 2:
-            bn = self.bn(conv, is_training, 'bn3')
-        else:
-            bn = conv
-        relu = tf.nn.relu(bn)
-
-        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv4')
-        if bn_select == 1:
-            bn = self.batchnorm(conv, 'bn4')
-        elif bn_select == 2:
-            bn = self.bn(conv, is_training, 'bn4')
-        else:
-            bn = conv
-        relu = tf.nn.relu(bn)
-
-        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv5')
-        if bn_select == 1:
-            bn = self.batchnorm(conv, 'bn5')
-        elif bn_select == 2:
-            bn = self.bn(conv, is_training, 'bn5')
-        else:
-            bn = conv
-        relu = tf.nn.relu(bn)
-
-        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv6')
-        if bn_select == 1:
-            bn = self.batchnorm(conv, 'bn6')
-        elif bn_select == 2:
-            bn = self.bn(conv, is_training, 'bn6')
-        else:
-            bn = conv
-        relu = tf.nn.relu(bn)
-
-        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv7')
-        if bn_select == 1:
-            bn = self.batchnorm(conv, 'bn7')
-        elif bn_select == 2:
-            bn = self.bn(conv, is_training, 'bn7')
-        else:
-            bn = conv
-        relu = tf.nn.relu(bn)
-
-        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv8')
-        if bn_select == 1:
-            bn = self.batchnorm(conv, 'bn8')
-        elif bn_select == 2:
-            bn = self.bn(conv, is_training, 'bn8')
-        else:
-            bn = conv
-        relu = tf.nn.relu(bn)
-
-        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv9')
-        if bn_select == 1:
-            bn = self.batchnorm(conv, 'bn9')
-        elif bn_select == 2:
-            bn = self.bn(conv, is_training, 'bn9')
-        else:
-            bn = conv
-        relu = tf.nn.relu(bn)
-
-        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv10')
-        if bn_select == 1:
-            bn = self.batchnorm(conv, 'bn10')
-        elif bn_select == 2:
-            bn = self.bn(conv, is_training, 'bn10')
-        else:
-            bn = conv
-        relu = tf.nn.relu(bn)
-
-        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv11')
-        if bn_select == 1:
-            bn = self.batchnorm(conv, 'bn11')
-        elif bn_select == 2:
-            bn = self.bn(conv, is_training, 'bn11')
-        else:
-            bn = conv
-        relu = tf.nn.relu(bn)
-
-        conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv12')
-        if bn_select == 1:
-            bn = self.batchnorm(conv, 'bn12')
-        elif bn_select == 2:
-            bn = self.bn(conv, is_training, 'bn12')
-        else:
-            bn = conv
-        relu = tf.nn.relu(bn)
-
-        output = self.conv3d(relu,self.kernel_size,self.num_filter,self.in_channel,'conv13')
-
-        L1_loss_forward = tf.reduce_mean(tf.abs(output - target))
-        pixel_num = self.input_size[0] * self.input_size[1]
-        #output_flatten = tf.reduce_sum(output,axis=3)
-        #tvDiff_loss_forward = \
-        #    tf.reduce_mean(tf.image.total_variation(output_flatten)) / pixel_num * 200 / 10000
-
-        for i in range(self.input_size[2]):
-            if i == 0:
-                tvDiff_loss_forward = \
-                tf.reduce_mean(tf.image.total_variation(output[:, :, :, i, :])) / pixel_num * 200 / 10000
+            conv = self.conv3d(relu,self.kernel_size,self.num_filter,self.num_filter,'conv2')
+            if bn_select == 1:
+                bn = self.batchnorm(conv,'bn2')
+            elif bn_select == 2:
+                bn = self.bn(conv,is_training,'bn2')
             else:
-                tvDiff_loss_forward = tvDiff_loss_forward + \
-                                      tf.reduce_mean(tf.image.total_variation(output[:,:,:,i,:])) / pixel_num * 200 / 10000
-        for i in range(self.input_size[1]):
-            if i == 0:
-                tvDiff_loss_forward = \
-                tf.reduce_mean(tf.image.total_variation(output[:, :, i, :, :])) / pixel_num * 200 / 10000
+                bn = conv
+            relu = tf.nn.relu(bn)
+
+            conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv3')
+            if bn_select == 1:
+                bn = self.batchnorm(conv, 'bn3')
+            elif bn_select == 2:
+                bn = self.bn(conv, is_training, 'bn3')
             else:
-                tvDiff_loss_forward = tvDiff_loss_forward + \
-                                      tf.reduce_mean(tf.image.total_variation(output[:,:,i,:,:])) / pixel_num * 200 / 10000
-        for i in range(self.input_size[0]):
-            if i == 0:
-                tvDiff_loss_forward = \
-                tf.reduce_mean(tf.image.total_variation(output[:, i, :, :, :])) / pixel_num * 200 / 10000
+                bn = conv
+            relu = tf.nn.relu(bn)
+
+            conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv4')
+            if bn_select == 1:
+                bn = self.batchnorm(conv, 'bn4')
+            elif bn_select == 2:
+                bn = self.bn(conv, is_training, 'bn4')
             else:
-                tvDiff_loss_forward = tvDiff_loss_forward + \
-                                      tf.reduce_mean(tf.image.total_variation(output[:,i,:,:,:])) / pixel_num * 200 / 10000
-        r = 100
-        tvDiff_loss_forward = tvDiff_loss_forward / self.input_size[2] / self.input_size[1] / self.input_size[0]*r
-        loss = L1_loss_forward + tvDiff_loss_forward
-        snr = self.snr(output,target)
-        with tf.name_scope('summaries'):
-            tf.summary.scalar('all loss', loss)
-            tf.summary.scalar('L1_loss',L1_loss_forward)
-            tf.summary.scalar('tv_loss',tvDiff_loss_forward)
-            tf.summary.scalar('snr',snr)
-        return output,loss,L1_loss_forward,tvDiff_loss_forward,snr
+                bn = conv
+            relu = tf.nn.relu(bn)
+
+            conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv5')
+            if bn_select == 1:
+                bn = self.batchnorm(conv, 'bn5')
+            elif bn_select == 2:
+                bn = self.bn(conv, is_training, 'bn5')
+            else:
+                bn = conv
+            relu = tf.nn.relu(bn)
+
+            conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv6')
+            if bn_select == 1:
+                bn = self.batchnorm(conv, 'bn6')
+            elif bn_select == 2:
+                bn = self.bn(conv, is_training, 'bn6')
+            else:
+                bn = conv
+            relu = tf.nn.relu(bn)
+
+            conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv7')
+            if bn_select == 1:
+                bn = self.batchnorm(conv, 'bn7')
+            elif bn_select == 2:
+                bn = self.bn(conv, is_training, 'bn7')
+            else:
+                bn = conv
+            relu = tf.nn.relu(bn)
+
+            conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv8')
+            if bn_select == 1:
+                bn = self.batchnorm(conv, 'bn8')
+            elif bn_select == 2:
+                bn = self.bn(conv, is_training, 'bn8')
+            else:
+                bn = conv
+            relu = tf.nn.relu(bn)
+
+            conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv9')
+            if bn_select == 1:
+                bn = self.batchnorm(conv, 'bn9')
+            elif bn_select == 2:
+                bn = self.bn(conv, is_training, 'bn9')
+            else:
+                bn = conv
+            relu = tf.nn.relu(bn)
+
+            conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv10')
+            if bn_select == 1:
+                bn = self.batchnorm(conv, 'bn10')
+            elif bn_select == 2:
+                bn = self.bn(conv, is_training, 'bn10')
+            else:
+                bn = conv
+            relu = tf.nn.relu(bn)
+
+            conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv11')
+            if bn_select == 1:
+                bn = self.batchnorm(conv, 'bn11')
+            elif bn_select == 2:
+                bn = self.bn(conv, is_training, 'bn11')
+            else:
+                bn = conv
+            relu = tf.nn.relu(bn)
+
+            conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv12')
+            if bn_select == 1:
+                bn = self.batchnorm(conv, 'bn12')
+            elif bn_select == 2:
+                bn = self.bn(conv, is_training, 'bn12')
+            else:
+                bn = conv
+            relu = tf.nn.relu(bn)
+
+            output = self.conv3d(relu,self.kernel_size,self.num_filter,self.in_channel,'conv13')
+
+            L1_loss_forward = tf.reduce_mean(tf.abs(output - target))
+            pixel_num = self.input_size[0] * self.input_size[1]
+            #output_flatten = tf.reduce_sum(output,axis=3)
+            #tvDiff_loss_forward = \
+            #    tf.reduce_mean(tf.image.total_variation(output_flatten)) / pixel_num * 200 / 10000
+
+            for i in range(self.input_size[2]):
+                if i == 0:
+                    tvDiff_loss_forward = \
+                    tf.reduce_mean(tf.image.total_variation(output[:, :, :, i, :])) / pixel_num * 200 / 10000
+                else:
+                    tvDiff_loss_forward = tvDiff_loss_forward + \
+                                          tf.reduce_mean(tf.image.total_variation(output[:,:,:,i,:])) / pixel_num * 200 / 10000
+            for i in range(self.input_size[1]):
+                if i == 0:
+                    tvDiff_loss_forward = \
+                    tf.reduce_mean(tf.image.total_variation(output[:, :, i, :, :])) / pixel_num * 200 / 10000
+                else:
+                    tvDiff_loss_forward = tvDiff_loss_forward + \
+                                          tf.reduce_mean(tf.image.total_variation(output[:,:,i,:,:])) / pixel_num * 200 / 10000
+            for i in range(self.input_size[0]):
+                if i == 0:
+                    tvDiff_loss_forward = \
+                    tf.reduce_mean(tf.image.total_variation(output[:, i, :, :, :])) / pixel_num * 200 / 10000
+                else:
+                    tvDiff_loss_forward = tvDiff_loss_forward + \
+                                          tf.reduce_mean(tf.image.total_variation(output[:,i,:,:,:])) / pixel_num * 200 / 10000
+            r = 100
+            tvDiff_loss_forward = tvDiff_loss_forward / self.input_size[2] / self.input_size[1] / self.input_size[0]*r
+            loss = L1_loss_forward + tvDiff_loss_forward
+            snr = self.snr(output,target)
+            with tf.name_scope('summaries'):
+                tf.summary.scalar('all loss', loss)
+                tf.summary.scalar('L1_loss',L1_loss_forward)
+                tf.summary.scalar('tv_loss',tvDiff_loss_forward)
+                tf.summary.scalar('snr',snr)
+            return output,L1_loss_forward,L1_loss_forward,tvDiff_loss_forward,snr
+
+    def build_model2(self,input, target, is_training,bn_select):
+        with tf.variable_scope('net', reuse=False) as vs:
+            conv = self.conv3d(input,self.kernel_size,self.in_channel,self.num_filter,'conv1')
+            relu = tf.nn.relu(conv)
+
+            output = self.conv3d(relu,self.kernel_size,self.num_filter,self.in_channel,'conv2')
+
+            L1_loss_forward = tf.reduce_mean(tf.abs(output - target))
+            L2_loss_forward = tf.reduce_sum(tf.square(output-target))
+            pixel_num = self.input_size[0] * self.input_size[1]
+            #output_flatten = tf.reduce_sum(output,axis=3)
+            #tvDiff_loss_forward = \
+            #    tf.reduce_mean(tf.image.total_variation(output_flatten)) / pixel_num * 200 / 10000
+
+            for i in range(self.input_size[2]):
+                if i == 0:
+                    tvDiff_loss_forward = \
+                    tf.reduce_mean(tf.image.total_variation(output[:, :, :, i, :])) / pixel_num * 200 / 10000
+                else:
+                    tvDiff_loss_forward = tvDiff_loss_forward + \
+                                          tf.reduce_mean(tf.image.total_variation(output[:,:,:,i,:])) / pixel_num * 200 / 10000
+            for i in range(self.input_size[1]):
+                if i == 0:
+                    tvDiff_loss_forward = \
+                    tf.reduce_mean(tf.image.total_variation(output[:, :, i, :, :])) / pixel_num * 200 / 10000
+                else:
+                    tvDiff_loss_forward = tvDiff_loss_forward + \
+                                          tf.reduce_mean(tf.image.total_variation(output[:,:,i,:,:])) / pixel_num * 200 / 10000
+            for i in range(self.input_size[0]):
+                if i == 0:
+                    tvDiff_loss_forward = \
+                    tf.reduce_mean(tf.image.total_variation(output[:, i, :, :, :])) / pixel_num * 200 / 10000
+                else:
+                    tvDiff_loss_forward = tvDiff_loss_forward + \
+                                          tf.reduce_mean(tf.image.total_variation(output[:,i,:,:,:])) / pixel_num * 200 / 10000
+            r = 100
+            tvDiff_loss_forward = tvDiff_loss_forward / self.input_size[2] / self.input_size[1] / self.input_size[0]*r
+            loss = L1_loss_forward + tvDiff_loss_forward
+            snr = self.snr(output,target)
+            with tf.name_scope('summaries'):
+                tf.summary.scalar('all loss', loss)
+                tf.summary.scalar('L1_loss',L1_loss_forward)
+                tf.summary.scalar('tv_loss',tvDiff_loss_forward)
+                tf.summary.scalar('snr',snr)
+            return output,L1_loss_forward,L1_loss_forward,tvDiff_loss_forward,snr
 
     def batchnorm(self,input, name):
         with tf.variable_scope(name):
             input = tf.identity(input)
             channels = input.get_shape()[-1:]
-            offset = tf.get_variable("gamma", [channels], dtype=tf.float32, initializer=tf.zeros_initializer(), trainable=True)
+            offset = tf.get_variable("gamma", [channels[0]], dtype=tf.float32, initializer=tf.zeros_initializer(), trainable=True)
 
 
-            scale = tf.get_variable("beta", [channels], dtype=tf.float32,
+            scale = tf.get_variable("beta", [channels[0]], dtype=tf.float32,
                                     initializer=tf.random_normal_initializer(1, 0.02),trainable=True)
             mean, variance = tf.nn.moments(input, axes=[0, 1, 2, 3], keep_dims=False)
             variance_epsilon = 1e-5
@@ -221,7 +267,11 @@ class unet_3d_model(object):
     def conv3d(self,x,k,in_channel,out_channel,name):
         with tf.variable_scope(name):
             kernel = tf.get_variable('kernel', [k,k,k,in_channel,out_channel],
-                                     dtype=tf.float32, initializer=tf.random_normal_initializer(0,0.05),trainable=True)
+                                     dtype=tf.float32, initializer=tf.random_normal_initializer(0,0.5),
+                                     trainable=True)
+            #kernel = tf.get_variable('kernel', shape=None,
+            #                         dtype=tf.float32, initializer=tf.ones([k, k, k, in_channel, out_channel]) * 0.005,
+            #                         trainable=True)
             self.variable_summaries(kernel)
             conv = tf.nn.conv3d(x,kernel,strides=[1,1,1,1,1],padding="SAME")
         return conv

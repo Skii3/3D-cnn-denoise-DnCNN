@@ -22,9 +22,9 @@ stride = [100,100,16]
 max_epochs = 1000
 step_decay = 1000
 decay_rate = 0.5
-lr = 1e-3
+lr = 1e0
 beta1 = 0.5
-bn_select = 2
+bn_select = 0
 batch_size = 40
 kernel_size = 4
 n_kernel = 13
@@ -66,18 +66,18 @@ if mode == 'train':
         print "num_filter:",num_filter
         print "kernel_size:",kernel_size
 
-        output, loss, l1_loss, tv_loss, snr = CNNclass.build_model(input, target, True,bn_select)
+        output, loss, l1_loss, tv_loss, snr = CNNclass.build_model2(input, target, True,bn_select)
 
         global_step = tf.Variable(0, trainable=False)
         learning_rate = tf.train.exponential_decay(lr, global_step,
                                                    step_decay, 0.5, staircase=True)
-
+        train_vars = tf.trainable_variables()
+        vars_forward = [var for var in train_vars if 'net' in var.name]
 
         #optim_forward = tf.train.AdamOptimizer(learning_rate=lr,beta1=beta1).minimize(loss)
         optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
-        optim_forward = optimizer.minimize(loss, global_step=global_step)
+        optim_forward = optimizer.minimize(loss, global_step=global_step,var_list=vars_forward)
 
-        var = tf.trainable_variables()
         with tf.name_scope('summaries'):
             tf.summary.scalar('learning rate',learning_rate)
         sess = tf.Session()
@@ -102,8 +102,8 @@ if mode == 'train':
         g = tf.get_default_graph()
         print("---------------------------training model---------------------------")
         for epoch in range(0, max_epochs + 1):
-
-            kernelshow(g, n_kernel, sess, epoch,bn_select)
+            if (epoch) % 20 == 0:
+                kernelshow(g, 2, sess, epoch,bn_select)
             if (epoch) % 1 == 0:
                 ind = np.arange(np.shape(data_epoch)[0])
                 ind = np.random.permutation(ind)
@@ -126,7 +126,7 @@ if mode == 'train':
 
             epoch_time = time.time()
             ind = np.arange(np.shape(data_epoch)[0])
-            ind = np.random.permutation(ind)
+            #ind = np.random.permutation(ind)
             data_epoch = data_epoch[ind,:,:,:,:]
             data_label_epoch = data_label_epoch[ind,:,:,:,:]
             sum_all_loss, sum_tvDiff_loss, sum_L1_loss, sum_snr = 0, 0, 0, 0
