@@ -174,7 +174,7 @@ elif mode == 'test':
         plt.show()
 elif mode == 'onetest':
 
-    output,_,_,_,_ = CNNclass.build_model(input, target, True,bn_select)
+    output,_,_,_,_ = CNNclass.build_model2(input, target, True,bn_select)
 
     _, _, test_data = load_data(rel_file_path=REL_FILE_PATH,
                                 start_point=start_point,
@@ -212,6 +212,7 @@ elif mode == 'onetest':
 
     sess = tf.Session()
     ckpt = tf.train.get_checkpoint_state('./model_save/')
+    print ckpt
     tf.train.Saver().restore(sess, ckpt.model_checkpoint_path)
     onedata_test_extract = np.expand_dims(onedata_test_extract,axis=4)
     denoise = np.zeros(np.shape(onedata_test_extract))
@@ -268,7 +269,7 @@ elif mode == 'onetest':
 
     print 'ok'
 elif mode == 'show_kernel':
-    CNNclass.build_model(input, target, True,bn_select)
+    CNNclass.build_model2(input, target, True,bn_select)
     sess = tf.Session()
     ckpt = tf.train.get_checkpoint_state('./model_save/')
     tf.train.Saver().restore(sess, ckpt.model_checkpoint_path)
