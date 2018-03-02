@@ -97,7 +97,7 @@ def load_data(rel_file_path = './traindata/',
                     '''
                     std_train_temp = np.mean(train_temp)
 
-                    noise_level = random.randint(1,10) * 1e-2
+                    noise_level = random.randint(1,20) * 1e-2
                     noise_temp = np.random.normal(0, noise_level * std_train_temp, train_temp.shape) + train_temp
 
                     train_data_noise.append(noise_temp)

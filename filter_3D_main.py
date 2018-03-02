@@ -18,15 +18,15 @@ ind1 = random.randint(0,99)
 ind2 = random.randint(0,15)
 start_point = [ind1,ind1,ind2]
 end_point = [876,900,100]
-stride = [100,100,16]
-max_epochs = 500
+stride = [80,80,10]
+max_epochs = 200
 step_decay = 1000
 decay_rate = 0.5
 lr = 1e-9
 beta1 = 0.5
-bn_select = 1
+bn_select = 2
 batch_size = 40
-kernel_size = 4
+kernel_size = 3
 n_kernel = 3
 num_filter = 16
 prelu = True
@@ -35,19 +35,19 @@ mode = 'train'
 if mode == 'train':
     patch_size = [40, 40, 40]
 else:
-    patch_size = [40, 40, 40]
-    batch_size = 40
+    patch_size = [200, 200, 100]
+    batch_size = 1
 #------------------ global settings ------------------#
 
 tf.device('/gpu:0')
 
 CNNclass = unet_3d_model(batch_size=batch_size,
-                                 input_size=patch_size,
-                                 kernel_size=kernel_size,
-                                 in_channel=1,
-                                 num_filter=num_filter,
-                                 stride=[1,1,1],
-                                 epochs=2)
+                         input_size=patch_size,
+                         kernel_size=kernel_size,
+                         in_channel=1,
+                         num_filter=num_filter,
+                         stride=[1,1,1],
+                         epochs=2)
 input = tf.placeholder('float32', [None, patch_size[0], patch_size[1], patch_size[2], 1], name='input')
 target = tf.placeholder('float32', [None, patch_size[0], patch_size[1], patch_size[2], 1], name='target')
 
@@ -67,7 +67,7 @@ if mode == 'train':
         print "num_filter:",num_filter
         print "kernel_size:",kernel_size
 
-        output, loss, l1_loss, tv_loss, snr = CNNclass.build_model2(input, target, True,bn_select,prelu)
+        output, loss, l1_loss, tv_loss, snr,del_snr,output_noise = CNNclass.build_model2(input, target, True,bn_select,prelu)
 
         global_step = tf.Variable(0, trainable=False)
         learning_rate = tf.train.exponential_decay(lr, global_step,
@@ -144,15 +144,15 @@ if mode == 'train':
                         scipy.misc.imsave('./train_data_step' + '/%d_%dlabeldata.png' % (data_i, data_i2),
                                           np.squeeze(data_label_step[data_i, :, :, data_i2, :]))
                 '''
-                tvDiff_loss,L1_loss,_,SNR, lr = sess.run(\
-                    [tv_loss,l1_loss,optim_forward,snr,learning_rate],\
+                tvDiff_loss,L1_loss,_,SNR, lr,DEL_SNR = sess.run(\
+                    [tv_loss,l1_loss,optim_forward,snr,learning_rate,del_snr],\
                     feed_dict={input:data_step, target:data_label_step})
                 sum_all_loss = sum_all_loss + tvDiff_loss + L1_loss
                 sum_tvDiff_loss = sum_tvDiff_loss + tvDiff_loss
                 sum_L1_loss = sum_L1_loss + L1_loss
                 sum_snr = sum_snr + SNR
-                print("[*] Step %d: all loss: %.8f, tvDiff loss: %.8f, l1 loss: %.8f, snr: %.2f, lr:%.16f") \
-                     % (step,tvDiff_loss+L1_loss, tvDiff_loss, L1_loss, SNR, lr)
+                print("[*] Step %d: all loss: %.8f, tvDiff loss: %.8f, l1 loss: %.8f, snr: %.2f,del_snr: %.5f lr:%.16f") \
+                     % (step,tvDiff_loss+L1_loss, tvDiff_loss, L1_loss, SNR, DEL_SNR, lr)
             print ("[*] Epoch [%2d/%2d] %4d time: %4.4fs, sum all loss: %.8f, sum tvDiff loss: %.8f, sum l1 loss: %.8f, sum snr: %.8f") \
                   % (epoch+1,max_epochs,np.shape(data_epoch)[0] // batch_size,
                      time.time()-epoch_time,sum_all_loss/n_iter,sum_tvDiff_loss/n_iter,sum_L1_loss/n_iter,sum_snr/n_iter)
@@ -184,7 +184,7 @@ elif mode == 'test':
         plt.show()
 elif mode == 'onetest':
 
-    output,_,_,_,_ = CNNclass.build_model2(input, target, True,bn_select,prelu)
+    output,_,_,_,_,_,_ = CNNclass.build_model2(input, target, True,bn_select,prelu)
 
     _, _, test_data = load_data(rel_file_path=REL_FILE_PATH,
                                 start_point=start_point,

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import tensorflow as tf
 from tensorflow.python.training import moving_averages
 from tensorflow.python.ops import control_flow_ops
@@ -187,10 +188,11 @@ class unet_3d_model(object):
             else:
                 relu = tf.nn.relu(bn)
 
-            output = input - self.conv3d(relu,self.kernel_size,self.num_filter,self.in_channel,'conv3')
+            output_noise = self.conv3d(relu,self.kernel_size,self.num_filter,self.in_channel,'conv3')
+            output = input - output_noise
 
-            L1_loss_forward = tf.reduce_mean(tf.abs(output - target))
-            L2_loss_forward = tf.reduce_sum(tf.square(output-target))
+            L1_loss_forward = tf.reduce_sum(tf.abs(output - target))
+            L2_loss_forward = tf.reduce_sum(tf.square(output - target))
             pixel_num = self.input_size[0] * self.input_size[1]
             #output_flatten = tf.reduce_sum(output,axis=3)
             #tvDiff_loss_forward = \
@@ -222,13 +224,13 @@ class unet_3d_model(object):
             tvDiff_loss_forward = tvDiff_loss_forward / self.input_size[2] / self.input_size[1] / self.input_size[0]
             loss = L1_loss_forward + tvDiff_loss_forward
             loss2 =  L2_loss_forward + tvDiff_loss_forward
-            snr = self.snr(output,target)
+            del_snr, snr = self.snr(input,output,target)
             with tf.name_scope('summaries'):
                 tf.summary.scalar('all loss', loss)
                 tf.summary.scalar('L1_loss',L1_loss_forward)
                 tf.summary.scalar('tv_loss',tvDiff_loss_forward)
                 tf.summary.scalar('snr',snr)
-            return output,loss2,L1_loss_forward,tvDiff_loss_forward,snr
+            return output,loss,L1_loss_forward,tvDiff_loss_forward,snr,del_snr,output_noise
 
     def batchnorm(self,input, name):
         with tf.variable_scope(name):
@@ -276,10 +278,15 @@ class unet_3d_model(object):
         return x
 
 
-    def snr(self,y,y_true):
+    def snr(self,x,y,y_true):
         tmp_snr = tf.reduce_sum(tf.square(tf.abs(y_true))) / tf.reduce_sum(tf.square(tf.abs(y_true - y)))
-        out = 10.0 * tf.log(tmp_snr) / tf.log(10.0)
-        return out
+        out = 10.0 * tf.log(tmp_snr) / tf.log(10.0)             # 输出图片的snr
+
+        tmp_snr0 = tf.reduce_sum(tf.square(tf.abs(y_true))) / tf.reduce_sum(tf.square(tf.abs(y_true - x)))
+        out0 = 10.0 * tf.log(tmp_snr0) / tf.log(10.0)           # 输入图片的snr
+
+        del_snr = out - out0
+        return del_snr, out
 
     def conv3d(self,x,k,in_channel,out_channel,name):
         with tf.variable_scope(name):

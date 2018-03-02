@@ -26,9 +26,15 @@ def kernelshow(g,n_kernel,sess,epoch,bn_select):
                 temp_temp1 = np.concatenate((temp[:, :, 0, j, i], np.ones([np.shape(temp)[0], 3]) * min,
                                              temp[:, :, 1, j, i], np.ones([np.shape(temp)[0], 3]) * min)
                                             , axis=1)
-                temp_temp2 = np.concatenate((temp[:, :, 2, j, i], min * np.ones([np.shape(temp)[0], 3]),
-                                             temp[:, :, 3, j, i], np.ones([np.shape(temp)[0], 3]) * min)
-                                            , axis=1)
+                if np.shape(temp)[2] == 4:
+                    temp_temp2 = np.concatenate((temp[:, :, 2, j, i], min * np.ones([np.shape(temp)[0], 3]),
+                                                 temp[:, :, 3, j, i], np.ones([np.shape(temp)[0], 3]) * min)
+                                                , axis=1)
+                else:
+                    temp_temp2 = np.concatenate((temp[:, :, 2, j, i], min * np.ones([np.shape(temp)[0], 3]),
+                                                 np.zeros(np.shape(temp[:, :, 2, j, i])),
+                                                 np.ones([np.shape(temp)[0], 3]) * min)
+                                                , axis=1)
                 temp_12 = np.concatenate((temp_temp1, np.ones([3, np.shape(temp_temp1)[1]]) * min, temp_temp2,
                                           np.ones([3, np.shape(temp_temp1)[1]]) * min)
                                          , axis=0)  # 4*4 -> 8*8
