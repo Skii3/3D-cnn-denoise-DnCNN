@@ -31,7 +31,7 @@ n_kernel = 3
 num_filter = 16
 prelu = True
 # train/test/onetest/show_kernel
-mode = 'traingit s'
+mode = 'train'
 if mode == 'train':
     patch_size = [40, 40, 40]
 else:
