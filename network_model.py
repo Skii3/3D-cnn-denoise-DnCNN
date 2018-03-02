@@ -188,7 +188,43 @@ class unet_3d_model(object):
             else:
                 relu = tf.nn.relu(bn)
 
-            output_noise = self.conv3d(relu,self.kernel_size,self.num_filter,self.in_channel,'conv3')
+            conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv3')
+            if bn_select == 1:
+                bn = self.batchnorm(conv, 'bn3')
+            elif bn_select == 2:
+                bn = self.bn(conv, is_training, 'bn3')
+            else:
+                bn = conv
+            if prelu == True:
+                relu = self.prelu(bn, 'relu3')
+            else:
+                relu = tf.nn.relu(bn)
+
+            conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv4')
+            if bn_select == 1:
+                bn = self.batchnorm(conv, 'bn4')
+            elif bn_select == 2:
+                bn = self.bn(conv, is_training, 'bn4')
+            else:
+                bn = conv
+            if prelu == True:
+                relu = self.prelu(bn, 'relu4')
+            else:
+                relu = tf.nn.relu(bn)
+
+            conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv5')
+            if bn_select == 1:
+                bn = self.batchnorm(conv, 'bn5')
+            elif bn_select == 2:
+                bn = self.bn(conv, is_training, 'bn5')
+            else:
+                bn = conv
+            if prelu == True:
+                relu = self.prelu(bn, 'relu5')
+            else:
+                relu = tf.nn.relu(bn)
+
+            output_noise = self.conv3d(relu,self.kernel_size,self.num_filter,self.in_channel,'conv6')
             output = input - output_noise
 
             L1_loss_forward = tf.reduce_sum(tf.abs(output - target))

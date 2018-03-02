@@ -27,7 +27,7 @@ beta1 = 0.5
 bn_select = 2
 batch_size = 40
 kernel_size = 3
-n_kernel = 3
+n_kernel = 6
 num_filter = 16
 prelu = True
 # train/test/onetest/show_kernel
@@ -111,7 +111,7 @@ if mode == 'train':
                 ind = np.random.permutation(ind)
                 data_test = data_epoch[ind[:2],:,:,:,:]
                 data_label_test = data_label_epoch[ind[:2],:,:,:,:]
-                denoise_test,summary = sess.run([output, merged],feed_dict={input:data_test, target:data_label_test})
+                denoise_test,summary,noise_test = sess.run([output, merged, output_noise],feed_dict={input:data_test, target:data_label_test})
                 train_writer.add_summary(summary,epoch)
                 for j in range(np.shape(data_test)[0]):
                     for i in range(4):
@@ -119,12 +119,13 @@ if mode == 'train':
                         temp1 = denoise_test[j,:,:,indd,0]
                         temp2 = data_test[j,:,:,indd,0]
                         temp3 = data_label_test[j,:,:,indd,0]
+                        temp4 = noise_test[j,:,:,indd,0]
                         if i == 0:
-                            result = np.concatenate((temp1.squeeze(),temp2.squeeze(),temp3.squeeze()),axis=1)
+                            result = np.concatenate((temp1.squeeze(),temp2.squeeze(),temp3.squeeze(),temp4.squeeze()),axis=1)
                         else:
-                            temp = np.concatenate((temp1.squeeze(),temp2.squeeze(),temp3.squeeze()),axis=1)
+                            temp = np.concatenate((temp1.squeeze(),temp2.squeeze(),temp3.squeeze(),temp4.squeeze()),axis=1)
                             result = np.concatenate((result,temp),axis=0)
-                scipy.misc.imsave('./train_result' + '/denoise_noisedata_label%d.png' % epoch, result)
+                scipy.misc.imsave('./train_result' + '/denoise_noisedata_label_noise%d.png' % epoch, result)
 
             epoch_time = time.time()
             ind = np.arange(np.shape(data_epoch)[0])
@@ -284,7 +285,7 @@ elif mode == 'onetest':
 
     for i in range(np.shape(onedata_test)[2]):
         scipy.misc.imsave('./test_result' + '/%dlabel.png'%i, onedata_test[:,:,i])
-        scipy.misc.imsave('./test_result' + '/%ddenoised.png'%i, denoise_onedata[:,:,i])
+        scipy.misc.imsave('./test_result' + '/%dmdenoised.png'%i, denoise_onedata[:,:,i])
         scipy.misc.imsave('./test_result' + '/%dnoisedata.png'%i, onedata_test_noise[:, :, i])
 
     print 'ok'
