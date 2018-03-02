@@ -17,6 +17,7 @@ def load_data(rel_file_path = './traindata/',
     test_data = []
     files_name = glob.glob(rel_file_path + '/*.mat')
     index = 1
+    print "[*] start loading data"
     for file_name in files_name:
         data = sio.loadmat(file_name)
         if index == 1:
@@ -109,7 +110,7 @@ def load_data(rel_file_path = './traindata/',
     train_data = np.array(train_data)
     test_data = np.array(test_data)
     train_data_noise = np.array(train_data_noise)
-
+    print "[*] load data down"
     return train_data,train_data_noise, test_data
 
     

@@ -22,9 +22,9 @@ stride = [100,100,16]
 max_epochs = 500
 step_decay = 1000
 decay_rate = 0.5
-lr = 1e-8
+lr = 1e-9
 beta1 = 0.5
-bn_select = 0
+bn_select = 1
 batch_size = 40
 kernel_size = 4
 n_kernel = 3
@@ -54,7 +54,7 @@ target = tf.placeholder('float32', [None, patch_size[0], patch_size[1], patch_si
 if mode == 'train':
         print "tv + l1 loss, conv"+str(n_kernel)
         print "bn_select:",bn_select
-        print "start point without random"
+        print "start point with random"
         print "end_point:",end_point
         print "stride:",stride
         print "max_epochs:",max_epochs
@@ -88,23 +88,24 @@ if mode == 'train':
         train_writer = tf.summary.FileWriter('./log',sess.graph)
         sess.run(tf.global_variables_initializer())
 
-        ind1 = 0  # random.randint(0, 99)
-        ind2 = 0  # random.randint(0, 15)
-        start_point = [ind1, ind1, ind2]
-
-        data_label_epoch, data_epoch, _ = load_data(rel_file_path=REL_FILE_PATH,
-                                                    start_point=start_point,
-                                                    end_point=end_point,
-                                                    patch_size=patch_size,
-                                                    stride=stride,
-                                                    traindata_save=TRAINDATA_SAVE_PATH)
-        data_epoch = np.expand_dims(data_epoch, axis=4)
-        data_label_epoch = np.expand_dims(data_label_epoch, axis=4)
         g = tf.get_default_graph()
         print("---------------------------training model---------------------------")
         for epoch in range(0, max_epochs + 1):
             if (epoch) % 20 == 0:
-                kernelshow(g,n_kernel, sess, epoch,bn_select)
+                ind1 = random.randint(0, 99)
+                ind2 = random.randint(0, 15)
+                start_point = [ind1, ind1, ind2]
+
+                data_label_epoch, data_epoch, _ = load_data(rel_file_path=REL_FILE_PATH,
+                                                            start_point=start_point,
+                                                            end_point=end_point,
+                                                            patch_size=patch_size,
+                                                            stride=stride,
+                                                            traindata_save=TRAINDATA_SAVE_PATH)
+                data_epoch = np.expand_dims(data_epoch, axis=4)
+                data_label_epoch = np.expand_dims(data_label_epoch, axis=4)
+            if (epoch) % 20 == 0:
+                kernelshow(g, n_kernel, sess, epoch, bn_select)
             if (epoch) % 1 == 0:
                 ind = np.arange(np.shape(data_epoch)[0])
                 ind = np.random.permutation(ind)
@@ -150,7 +151,7 @@ if mode == 'train':
                 sum_tvDiff_loss = sum_tvDiff_loss + tvDiff_loss
                 sum_L1_loss = sum_L1_loss + L1_loss
                 sum_snr = sum_snr + SNR
-                print("[*] Step %d: all loss: %.8f, tvDiff loss: %.8f, l1 loss: %.8f, snr: %.2f, lr:%.8f") \
+                print("[*] Step %d: all loss: %.8f, tvDiff loss: %.8f, l1 loss: %.8f, snr: %.2f, lr:%.16f") \
                      % (step,tvDiff_loss+L1_loss, tvDiff_loss, L1_loss, SNR, lr)
             print ("[*] Epoch [%2d/%2d] %4d time: %4.4fs, sum all loss: %.8f, sum tvDiff loss: %.8f, sum l1 loss: %.8f, sum snr: %.8f") \
                   % (epoch+1,max_epochs,np.shape(data_epoch)[0] // batch_size,
@@ -183,7 +184,7 @@ elif mode == 'test':
         plt.show()
 elif mode == 'onetest':
 
-    output,_,_,_,_ = CNNclass.build_model2(input, target, True,bn_select)
+    output,_,_,_,_ = CNNclass.build_model2(input, target, True,bn_select,prelu)
 
     _, _, test_data = load_data(rel_file_path=REL_FILE_PATH,
                                 start_point=start_point,
@@ -194,8 +195,18 @@ elif mode == 'onetest':
     onedata = np.concatenate((test_data[0,:,:,:],test_data[1,:,:,:]),axis=2)    # 876*900*160
     onedata_test = onedata[:,:,:patch_size[2]]
 
-    ref_value = np.max(np.abs(onedata_test))
-    onedata_test_noise = onedata_test + np.random.normal(0, random.randint(1, 10) * 1e-2 * ref_value, onedata_test.shape)
+    # normalize to [0,1]
+    max_train_temp = np.max(onedata_test)
+    min_train_temp = np.min(onedata_test)
+    onedata_test = (onedata_test - min_train_temp) / (max_train_temp - min_train_temp)
+
+    std_train_temp = np.mean(onedata_test)
+
+    noise_level = random.randint(1, 10) * 1e-2
+    onedata_test_noise = np.random.normal(0, noise_level * std_train_temp, onedata_test.shape) + onedata_test
+
+    #ref_value = np.max(np.abs(onedata_test))
+    #onedata_test_noise = onedata_test + np.random.normal(0, random.randint(1, 10) * 1e-2 * ref_value, onedata_test.shape)
 
     onedata_test_extract = []
     for i in range(0,np.shape(onedata_test)[0]-patch_size[0]+1,patch_size[0]):

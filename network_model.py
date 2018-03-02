@@ -187,7 +187,7 @@ class unet_3d_model(object):
             else:
                 relu = tf.nn.relu(bn)
 
-            output = self.conv3d(relu,self.kernel_size,self.num_filter,self.in_channel,'conv3')
+            output = input - self.conv3d(relu,self.kernel_size,self.num_filter,self.in_channel,'conv3')
 
             L1_loss_forward = tf.reduce_mean(tf.abs(output - target))
             L2_loss_forward = tf.reduce_sum(tf.square(output-target))
@@ -196,37 +196,39 @@ class unet_3d_model(object):
             #tvDiff_loss_forward = \
             #    tf.reduce_mean(tf.image.total_variation(output_flatten)) / pixel_num * 200 / 10000
 
+            tv_lambda = 20000
             for i in range(self.input_size[2]):
                 if i == 0:
                     tvDiff_loss_forward = \
-                    tf.reduce_mean(tf.image.total_variation(output[:, :, :, i, :])) / pixel_num * 200 / 10000
+                    tf.reduce_mean(tf.image.total_variation(output[:, :, :, i, :])) / pixel_num * tv_lambda / 10000
                 else:
                     tvDiff_loss_forward = tvDiff_loss_forward + \
                                           tf.reduce_mean(tf.image.total_variation(output[:,:,:,i,:])) / pixel_num * 200 / 10000
             for i in range(self.input_size[1]):
                 if i == 0:
                     tvDiff_loss_forward = \
-                    tf.reduce_mean(tf.image.total_variation(output[:, :, i, :, :])) / pixel_num * 200 / 10000
+                    tf.reduce_mean(tf.image.total_variation(output[:, :, i, :, :])) / pixel_num * tv_lambda / 10000
                 else:
                     tvDiff_loss_forward = tvDiff_loss_forward + \
                                           tf.reduce_mean(tf.image.total_variation(output[:,:,i,:,:])) / pixel_num * 200 / 10000
             for i in range(self.input_size[0]):
                 if i == 0:
                     tvDiff_loss_forward = \
-                    tf.reduce_mean(tf.image.total_variation(output[:, i, :, :, :])) / pixel_num * 200 / 10000
+                    tf.reduce_mean(tf.image.total_variation(output[:, i, :, :, :])) / pixel_num * tv_lambda / 10000
                 else:
                     tvDiff_loss_forward = tvDiff_loss_forward + \
-                                          tf.reduce_mean(tf.image.total_variation(output[:,i,:,:,:])) / pixel_num * 200 / 10000
-            r = 100
-            tvDiff_loss_forward = tvDiff_loss_forward / self.input_size[2] / self.input_size[1] / self.input_size[0]*r
+                                          tf.reduce_mean(tf.image.total_variation(output[:,i,:,:,:])) / pixel_num * tv_lambda / 10000
+
+            tvDiff_loss_forward = tvDiff_loss_forward / self.input_size[2] / self.input_size[1] / self.input_size[0]
             loss = L1_loss_forward + tvDiff_loss_forward
+            loss2 =  L2_loss_forward + tvDiff_loss_forward
             snr = self.snr(output,target)
             with tf.name_scope('summaries'):
                 tf.summary.scalar('all loss', loss)
                 tf.summary.scalar('L1_loss',L1_loss_forward)
                 tf.summary.scalar('tv_loss',tvDiff_loss_forward)
                 tf.summary.scalar('snr',snr)
-            return output,L2_loss_forward,L1_loss_forward,tvDiff_loss_forward,snr
+            return output,loss2,L1_loss_forward,tvDiff_loss_forward,snr
 
     def batchnorm(self,input, name):
         with tf.variable_scope(name):
