@@ -167,12 +167,27 @@ class unet_3d_model(object):
                 tf.summary.scalar('snr',snr)
             return output,L1_loss_forward,L1_loss_forward,tvDiff_loss_forward,snr
 
-    def build_model2(self,input, target, is_training,bn_select):
+    def build_model2(self,input, target, is_training,bn_select,prelu):
         with tf.variable_scope('net', reuse=False) as vs:
             conv = self.conv3d(input,self.kernel_size,self.in_channel,self.num_filter,'conv1')
-            relu = tf.nn.relu(conv)
+            if prelu == True:
+                relu = self.prelu(conv,'relu1')
+            else:
+                relu = tf.nn.relu(conv)
 
-            output = self.conv3d(relu,self.kernel_size,self.num_filter,self.in_channel,'conv2')
+            conv = self.conv3d(relu, self.kernel_size, self.num_filter, self.num_filter, 'conv2')
+            if bn_select == 1:
+                bn = self.batchnorm(conv, 'bn2')
+            elif bn_select == 2:
+                bn = self.bn(conv, is_training, 'bn2')
+            else:
+                bn = conv
+            if prelu == True:
+                relu = self.prelu(bn,'relu2')
+            else:
+                relu = tf.nn.relu(bn)
+
+            output = self.conv3d(relu,self.kernel_size,self.num_filter,self.in_channel,'conv3')
 
             L1_loss_forward = tf.reduce_mean(tf.abs(output - target))
             L2_loss_forward = tf.reduce_sum(tf.square(output-target))
@@ -211,7 +226,7 @@ class unet_3d_model(object):
                 tf.summary.scalar('L1_loss',L1_loss_forward)
                 tf.summary.scalar('tv_loss',tvDiff_loss_forward)
                 tf.summary.scalar('snr',snr)
-            return output,L1_loss_forward,L1_loss_forward,tvDiff_loss_forward,snr
+            return output,L2_loss_forward,L1_loss_forward,tvDiff_loss_forward,snr
 
     def batchnorm(self,input, name):
         with tf.variable_scope(name):
@@ -267,7 +282,7 @@ class unet_3d_model(object):
     def conv3d(self,x,k,in_channel,out_channel,name):
         with tf.variable_scope(name):
             kernel = tf.get_variable('kernel', [k,k,k,in_channel,out_channel],
-                                     dtype=tf.float32, initializer=tf.random_normal_initializer(0,0.5),
+                                     dtype=tf.float32, initializer=tf.random_normal_initializer(0,0.05),
                                      trainable=True)
             #kernel = tf.get_variable('kernel', shape=None,
             #                         dtype=tf.float32, initializer=tf.ones([k, k, k, in_channel, out_channel]) * 0.005,
@@ -278,6 +293,16 @@ class unet_3d_model(object):
 
     def maxpool3d(self,x):
         return tf.nn.max_pool3d(x,ksize=[1,2,2,2,1],strides=[1,2,2,2,1],padding="SAME")
+
+    def prelu(self,_x,name):
+        with tf.variable_scope(name):
+            alphas = tf.get_variable('alpha', _x.get_shape()[-1],
+                                     initializer=tf.constant_initializer(0.0),
+                                     dtype=tf.float32)
+            pos = tf.nn.relu(_x)
+            neg = alphas * (_x - abs(_x)) * 0.5
+
+        return pos + neg
 
     def _get_conv_variable(self,input_size):
         out = tf.Variable(tf.truncated_normal(input_size,stddev=0.01,name="weights"))

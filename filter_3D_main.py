@@ -19,16 +19,17 @@ ind2 = random.randint(0,15)
 start_point = [ind1,ind1,ind2]
 end_point = [876,900,100]
 stride = [100,100,16]
-max_epochs = 1000
+max_epochs = 500
 step_decay = 1000
 decay_rate = 0.5
-lr = 1e0
+lr = 1e-8
 beta1 = 0.5
 bn_select = 0
 batch_size = 40
 kernel_size = 4
-n_kernel = 13
+n_kernel = 3
 num_filter = 16
+prelu = True
 # train/test/onetest/show_kernel
 mode = 'train'
 if mode == 'train':
@@ -66,7 +67,7 @@ if mode == 'train':
         print "num_filter:",num_filter
         print "kernel_size:",kernel_size
 
-        output, loss, l1_loss, tv_loss, snr = CNNclass.build_model2(input, target, True,bn_select)
+        output, loss, l1_loss, tv_loss, snr = CNNclass.build_model2(input, target, True,bn_select,prelu)
 
         global_step = tf.Variable(0, trainable=False)
         learning_rate = tf.train.exponential_decay(lr, global_step,
@@ -103,7 +104,7 @@ if mode == 'train':
         print("---------------------------training model---------------------------")
         for epoch in range(0, max_epochs + 1):
             if (epoch) % 20 == 0:
-                kernelshow(g, 2, sess, epoch,bn_select)
+                kernelshow(g,n_kernel, sess, epoch,bn_select)
             if (epoch) % 1 == 0:
                 ind = np.arange(np.shape(data_epoch)[0])
                 ind = np.random.permutation(ind)
@@ -126,7 +127,7 @@ if mode == 'train':
 
             epoch_time = time.time()
             ind = np.arange(np.shape(data_epoch)[0])
-            #ind = np.random.permutation(ind)
+            ind = np.random.permutation(ind)
             data_epoch = data_epoch[ind,:,:,:,:]
             data_label_epoch = data_label_epoch[ind,:,:,:,:]
             sum_all_loss, sum_tvDiff_loss, sum_L1_loss, sum_snr = 0, 0, 0, 0
@@ -134,6 +135,14 @@ if mode == 'train':
             for step in range(0, n_iter,1):
                 data_step = data_epoch[step:step+batch_size,:,:,:,:]
                 data_label_step = data_label_epoch[step:step+batch_size,:,:,:,:]
+                '''
+                # show train data per step
+                for data_i in range(batch_size):
+                    for data_i2 in range(np.shape(data_step)[3]):
+                        scipy.misc.imsave('./train_data_step' + '/%d_%dnoisedata.png' % (data_i, data_i2),np.squeeze(data_step[data_i,:,:,data_i2,:]))
+                        scipy.misc.imsave('./train_data_step' + '/%d_%dlabeldata.png' % (data_i, data_i2),
+                                          np.squeeze(data_label_step[data_i, :, :, data_i2, :]))
+                '''
                 tvDiff_loss,L1_loss,_,SNR, lr = sess.run(\
                     [tv_loss,l1_loss,optim_forward,snr,learning_rate],\
                     feed_dict={input:data_step, target:data_label_step})

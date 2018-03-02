@@ -31,6 +31,11 @@ def load_data(rel_file_path = './traindata/',
                 for k in range(start_point[2],end_point[2]-patch_size[2]+1, stride[2]):
                     train_temp = data_data[i:i+patch_size[0], j:j+patch_size[1], k:k+patch_size[2]]
 
+                    # normalize
+                    #train_temp_mean = np.mean(train_temp)
+                    #train_temp_std = np.std(train_temp)
+                    #train_temp = (train_temp - train_temp_mean) / train_temp_std
+
                     # first rotate
                     aug_type1 = random.randint(1,6)    # rotate to different phases
                     aug_type2 = random.randint(1,8)     # different rotation and flip
@@ -61,6 +66,7 @@ def load_data(rel_file_path = './traindata/',
                             train_temp = np.rot90(train_temp, k=3, axes=(1,2))
 
                     # second intensity aug
+                    '''
                     intensity_aug = random.randint(1, 5)
                     if intensity_aug == 2:
                         train_temp = train_temp * np.sqrt(np.sqrt(np.abs(train_temp) + 1e-12))
@@ -68,21 +74,34 @@ def load_data(rel_file_path = './traindata/',
                     elif intensity_aug == 3:
                         train_temp = train_temp / np.sqrt(np.sqrt(np.abs(train_temp) + 1e-12))
                         train_temp = train_temp / np.max(train_temp)
+                    '''
+                    # normalize to [0,1]
+                    max_train_temp = np.max(train_temp)
+                    min_train_temp = np.min(train_temp)
+                    train_temp = (train_temp - min_train_temp) / (max_train_temp - min_train_temp)
+
                     train_data.append(train_temp)
                     #scipy.misc.imsave(traindata_save + '/%d_%d_%d_labeldata.jpg' % (i, j, k), train_temp[0, :, :])
 
                     # third add noise
+                    '''
                     noise_aug = random.randint(1,2)
                     if noise_aug == 1:
                         ref_value = np.max(np.abs(train_temp))
-                        noise_temp = train_temp + np.random.normal(0, random.randint(1, 20) * 1e-2 * ref_value, train_temp.shape)
+                        noise_temp = train_temp + np.random.normal(0, random.randint(1, 10) * 1e-2 * ref_value, train_temp.shape)
                     elif noise_aug == 2:
                         ref_value = np.mean(np.abs(train_temp))
-                        noise_temp = train_temp + np.random.normal(0, random.randint(1, 25) * 1e-1 * ref_value,
+                        noise_temp = train_temp + np.random.normal(0, random.randint(1, 15) * 1e-1 * ref_value,
                                                                    train_temp.shape)
+                    '''
+                    std_train_temp = np.mean(train_temp)
+
+                    noise_level = random.randint(1,10) * 1e-2
+                    noise_temp = np.random.normal(0, noise_level * std_train_temp, train_temp.shape) + train_temp
 
                     train_data_noise.append(noise_temp)
 
+                    #print '/%d_%d_%d_noisedata.jpg:' %(i,j,k), std_train_temp
                     #scipy.misc.imsave(traindata_save + '/%d_%d_%d_noisedata.jpg' %(i,j,k), noise_temp[0,:,:])
 
         test_data.append(data_data[:,:,end_point[2]:])
