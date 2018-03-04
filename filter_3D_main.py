@@ -29,7 +29,7 @@ bn_select = 2
 batch_size = 40
 kernel_size = 3
 n_kernel = 6
-num_filter = 16
+num_filter = 64
 prelu = True
 MODEL_PATH = './model_save'
 if not os.path.exists(MODEL_PATH):

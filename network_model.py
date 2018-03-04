@@ -273,8 +273,6 @@ class unet_3d_model(object):
             input = tf.identity(input)
             channels = input.get_shape()[-1:]
             offset = tf.get_variable("gamma", [channels[0]], dtype=tf.float32, initializer=tf.zeros_initializer(), trainable=True)
-
-
             scale = tf.get_variable("beta", [channels[0]], dtype=tf.float32,
                                     initializer=tf.random_normal_initializer(1, 0.02),trainable=True)
             mean, variance = tf.nn.moments(input, axes=[0, 1, 2, 3], keep_dims=False)
@@ -327,13 +325,14 @@ class unet_3d_model(object):
     def conv3d(self,x,k,in_channel,out_channel,name):
         with tf.variable_scope(name):
             kernel = tf.get_variable('kernel', [k,k,k,in_channel,out_channel],
-                                     dtype=tf.float32, initializer=tf.random_normal_initializer(0,0.05),
+                                     dtype=tf.float32, initializer=tf.truncated_normal(0,0.05),
                                      trainable=True)
+            bias = tf.get_variable('biases',[1,out_channel],initializer=tf.constant(0.0,dtype=tf.float32))
             #kernel = tf.get_variable('kernel', shape=None,
             #                         dtype=tf.float32, initializer=tf.ones([k, k, k, in_channel, out_channel]) * 0.005,
             #                         trainable=True)
             self.variable_summaries(kernel)
-            conv = tf.nn.conv3d(x,kernel,strides=[1,1,1,1,1],padding="SAME")
+            conv = tf.add(tf.nn.conv3d(x,kernel,strides=[1,1,1,1,1],padding="SAME") + bias)
         return conv
 
     def maxpool3d(self,x):
