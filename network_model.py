@@ -257,7 +257,7 @@ class unet_3d_model(object):
                     tvDiff_loss_forward = tvDiff_loss_forward + \
                                           tf.reduce_mean(tf.image.total_variation(output[:,i,:,:,:])) / pixel_num * tv_lambda / 10000
 
-            tvDiff_loss_forward = tvDiff_loss_forward / self.input_size[2] / self.input_size[1] / self.input_size[0]
+            tvDiff_loss_forward = tvDiff_loss_forward * pixel_num # / self.input_size[2] / self.input_size[1] / self.input_size[0]
             loss = L1_loss_forward + tvDiff_loss_forward
             loss2 =  L2_loss_forward + tvDiff_loss_forward
             del_snr, snr = self.snr(input,output,target)

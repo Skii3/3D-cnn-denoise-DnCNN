@@ -8,6 +8,7 @@ import tensorflow as tf
 import time
 import math
 import scipy
+import os
 import random
 from show_data import kernelshow
 #------------------ global settings ------------------#
@@ -30,10 +31,19 @@ kernel_size = 3
 n_kernel = 6
 num_filter = 16
 prelu = True
-# train/test/onetest/show_kernel
-mode = 'train'
+MODEL_PATH = './model_save'
+if not os.path.exists(MODEL_PATH):
+    os.mkdir(MODEL_PATH)
+TEST_RESULT_SAVE_PATH = './test_result'
+if not os.path.exists(TEST_RESULT_SAVE_PATH):
+    os.mkdir(TEST_RESULT_SAVE_PATH)
+# train/test/onetest/show_kernel/onetest2
+mode = 'onetest2'
 if mode == 'train':
     patch_size = [40, 40, 40]
+elif mode == 'onetest2':
+    patch_size = [800, 800, 8]
+    batch_size = 1
 else:
     patch_size = [200, 200, 100]
     batch_size = 1
@@ -52,20 +62,20 @@ input = tf.placeholder('float32', [None, patch_size[0], patch_size[1], patch_siz
 target = tf.placeholder('float32', [None, patch_size[0], patch_size[1], patch_size[2], 1], name='target')
 
 if mode == 'train':
-        print "tv + l1 loss, conv"+str(n_kernel)
-        print "bn_select:",bn_select
+        print "tv + l1 loss, conv" + str(n_kernel)
+        print "bn_select:", bn_select
         print "start point with random"
-        print "end_point:",end_point
-        print "stride:",stride
-        print "max_epochs:",max_epochs
-        print "lr:",lr
-        print "decay_rate:",decay_rate
-        print "step_decay",step_decay
-        print "beta1:",beta1
-        print "batch_size:",batch_size
-        print "patch_size:",patch_size
-        print "num_filter:",num_filter
-        print "kernel_size:",kernel_size
+        print "end_point:", end_point
+        print "stride:", stride
+        print "max_epochs:", max_epochs
+        print "lr:", lr
+        print "decay_rate:", decay_rate
+        print "step_decay", step_decay
+        print "beta1:", beta1
+        print "batch_size:", batch_size
+        print "patch_size:", patch_size
+        print "num_filter:", num_filter
+        print "kernel_size:", kernel_size
 
         output, loss, l1_loss, tv_loss, snr,del_snr,output_noise = CNNclass.build_model2(input, target, True,bn_select,prelu)
 
@@ -203,7 +213,7 @@ elif mode == 'onetest':
 
     std_train_temp = np.mean(onedata_test)
 
-    noise_level = random.randint(1, 10) * 1e-2
+    noise_level = random.randint(15, 20) * 1e-2
     onedata_test_noise = np.random.normal(0, noise_level * std_train_temp, onedata_test.shape) + onedata_test
 
     #ref_value = np.max(np.abs(onedata_test))
@@ -289,6 +299,43 @@ elif mode == 'onetest':
         scipy.misc.imsave('./test_result' + '/%dnoisedata.png'%i, onedata_test_noise[:, :, i])
 
     print 'ok'
+elif mode == 'onetest2':
+    output, _, _, _, _, _, _ = CNNclass.build_model2(input, target, True, bn_select, prelu)
+    _, _, test_data = load_data(rel_file_path=REL_FILE_PATH,
+                                start_point=start_point,
+                                end_point=end_point,
+                                patch_size=patch_size,
+                                stride=stride,
+                                traindata_save=TRAINDATA_SAVE_PATH)
+
+    onedata = np.concatenate((test_data[0, :, :, :], test_data[1, :, :, :]), axis=2)  # 876*900*160
+    onedata_test = onedata[:patch_size[0], :patch_size[1], :patch_size[2]]
+
+    # normalize to [0,1]
+    max_train_temp = np.max(onedata_test)
+    min_train_temp = np.min(onedata_test)
+    onedata_test = (onedata_test - min_train_temp) / (max_train_temp - min_train_temp)
+
+    std_train_temp = np.mean(onedata_test)
+
+    noise_level = random.randint(15, 20) * 1e-2
+    onedata_test_noise = np.random.normal(0, noise_level * std_train_temp, onedata_test.shape) + onedata_test
+
+    onedata_test_noise = np.reshape(onedata_test_noise,
+                                    [1, np.shape(onedata_test_noise)[0], np.shape(onedata_test_noise)[1],
+                                     np.shape(onedata_test_noise)[2], 1])
+
+    sess = tf.Session()
+    ckpt = tf.train.get_checkpoint_state(MODEL_PATH)
+    print ckpt
+    tf.train.Saver().restore(sess, ckpt.model_checkpoint_path)
+    denoised = sess.run(output, feed_dict={input:onedata_test_noise})
+    for i in range(patch_size[2]):
+        scipy.misc.imsave(TEST_RESULT_SAVE_PATH + '/%d_%.2flabel.png' % (i, noise_level), onedata_test[:, :, i])
+        scipy.misc.imsave(TEST_RESULT_SAVE_PATH + '/%d_%.2fmdenoise.png' % (i, noise_level),
+                          np.squeeze(denoised[:, :, :, i, 0]))
+        scipy.misc.imsave(TEST_RESULT_SAVE_PATH + '/%d_%.2fnoisedata.png' % (i, noise_level),
+                          np.squeeze(onedata_test_noise[:, :, :, i, 0]))
 elif mode == 'show_kernel':
     CNNclass.build_model2(input, target, True,bn_select)
     sess = tf.Session()
