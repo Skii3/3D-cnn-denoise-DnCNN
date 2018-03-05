@@ -20,16 +20,16 @@ ind2 = random.randint(0,15)
 start_point = [ind1,ind1,ind2]
 end_point = [876,900,100]
 stride = [80,80,10]
-max_epochs = 200
+max_epochs = 1000
 step_decay = 1000
 decay_rate = 0.5
-lr = 1e-9
+lr = 1e-4
 beta1 = 0.5
 bn_select = 2
-batch_size = 40
+batch_size = 20
 kernel_size = 3
-n_kernel = 6
-num_filter = 64
+n_kernel = 12
+num_filter = 16
 prelu = True
 MODEL_PATH = './model_save'
 if not os.path.exists(MODEL_PATH):
@@ -38,7 +38,7 @@ TEST_RESULT_SAVE_PATH = './test_result'
 if not os.path.exists(TEST_RESULT_SAVE_PATH):
     os.mkdir(TEST_RESULT_SAVE_PATH)
 # train/test/onetest/show_kernel/onetest2
-mode = 'onetest2'
+mode = 'train'
 if mode == 'train':
     patch_size = [40, 40, 40]
 elif mode == 'onetest2':
@@ -77,7 +77,7 @@ if mode == 'train':
         print "num_filter:", num_filter
         print "kernel_size:", kernel_size
 
-        output, loss, l1_loss, tv_loss, snr,del_snr,output_noise = CNNclass.build_model2(input, target, True,bn_select,prelu)
+        output, loss, l1_loss, tv_loss, snr,del_snr,output_noise = CNNclass.build_model(input, target, True,bn_select)
 
         global_step = tf.Variable(0, trainable=False)
         learning_rate = tf.train.exponential_decay(lr, global_step,
@@ -85,9 +85,9 @@ if mode == 'train':
         train_vars = tf.trainable_variables()
         vars_forward = [var for var in train_vars if 'net' in var.name]
 
-        #optim_forward = tf.train.AdamOptimizer(learning_rate=lr,beta1=beta1).minimize(loss)
+        optim_forward = tf.train.AdamOptimizer(learning_rate=lr,beta1=beta1).minimize(loss)
         optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
-        optim_forward = optimizer.minimize(loss, global_step=global_step,var_list=vars_forward)
+        #optim_forward = optimizer.minimize(loss, global_step=global_step,var_list=vars_forward)
 
         with tf.name_scope('summaries'):
             tf.summary.scalar('learning rate',learning_rate)
@@ -195,7 +195,7 @@ elif mode == 'test':
         plt.show()
 elif mode == 'onetest':
 
-    output,_,_,_,_,_,_ = CNNclass.build_model2(input, target, True,bn_select,prelu)
+    output,_,_,_,_,_,_ = CNNclass.build_model(input, target, True,bn_select)
 
     _, _, test_data = load_data(rel_file_path=REL_FILE_PATH,
                                 start_point=start_point,
@@ -300,7 +300,7 @@ elif mode == 'onetest':
 
     print 'ok'
 elif mode == 'onetest2':
-    output, _, _, _, _, _, _ = CNNclass.build_model2(input, target, True, bn_select, prelu)
+    output, _, _, _, _, _, _ = CNNclass.build_model(input, target, True)
     _, _, test_data = load_data(rel_file_path=REL_FILE_PATH,
                                 start_point=start_point,
                                 end_point=end_point,
@@ -337,7 +337,7 @@ elif mode == 'onetest2':
         scipy.misc.imsave(TEST_RESULT_SAVE_PATH + '/%d_%.2fnoisedata.png' % (i, noise_level),
                           np.squeeze(onedata_test_noise[:, :, :, i, 0]))
 elif mode == 'show_kernel':
-    CNNclass.build_model2(input, target, True,bn_select)
+    CNNclass.build_model(input, target, True,bn_select)
     sess = tf.Session()
     ckpt = tf.train.get_checkpoint_state('./model_save/')
     tf.train.Saver().restore(sess, ckpt.model_checkpoint_path)

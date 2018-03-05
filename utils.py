@@ -77,10 +77,10 @@ def load_data(rel_file_path = './traindata/',
                         train_temp = train_temp / np.max(train_temp)
                     '''
                     # normalize to [0,1]
-                    max_train_temp = np.max(train_temp)
-                    min_train_temp = np.min(train_temp)
-                    train_temp = (train_temp - min_train_temp) / (max_train_temp - min_train_temp)
-
+                    #max_train_temp = np.max(train_temp)
+                    #min_train_temp = np.min(train_temp)
+                    #train_temp = (train_temp - min_train_temp) / (max_train_temp - min_train_temp)
+                    train_temp = (train_temp - np.mean(train_temp)) / np.std(train_temp)
                     train_data.append(train_temp)
                     #scipy.misc.imsave(traindata_save + '/%d_%d_%d_labeldata.jpg' % (i, j, k), train_temp[0, :, :])
 
@@ -95,10 +95,10 @@ def load_data(rel_file_path = './traindata/',
                         noise_temp = train_temp + np.random.normal(0, random.randint(1, 15) * 1e-1 * ref_value,
                                                                    train_temp.shape)
                     '''
-                    std_train_temp = np.mean(train_temp)
-
-                    noise_level = random.randint(1,20) * 1e-2
-                    noise_temp = np.random.normal(0, noise_level * std_train_temp, train_temp.shape) + train_temp
+                    #std_train_temp = np.mean(train_temp)
+                    ref = np.max(train_temp)
+                    noise_level = random.randint(1,30) * 1e-2
+                    noise_temp = np.random.normal(0, noise_level * ref, train_temp.shape) + train_temp
 
                     train_data_noise.append(noise_temp)
 
