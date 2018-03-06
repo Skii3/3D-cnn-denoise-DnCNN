@@ -153,12 +153,13 @@ class unet_3d_model(object):
             tvDiff_loss_forward = tvDiff_loss_forward / self.input_size[2] / self.input_size[1] / self.input_size[0]
             loss = L1_loss_forward + tvDiff_loss_forward
             del_snr, snr = self.snr(input, output, target)
+            input_snr = self.input_snr(input,target)
             with tf.name_scope('summaries'):
                 tf.summary.scalar('all loss', loss)
                 tf.summary.scalar('L1_loss',L1_loss_forward)
                 tf.summary.scalar('tv_loss',tvDiff_loss_forward)
                 tf.summary.scalar('snr',snr)
-                return output, loss, L1_loss_forward, tvDiff_loss_forward, snr, del_snr, output_noise
+            return output, loss, L1_loss_forward, tvDiff_loss_forward, snr, del_snr, output_noise,input_snr
 
     def build_model2(self,input, target, is_training,bn_select,prelu):
         with tf.variable_scope('net', reuse=False) as vs:
@@ -313,6 +314,11 @@ class unet_3d_model(object):
 
         del_snr = out - out0
         return del_snr, out
+
+    def input_snr(self,input,target):
+        tmp_snr0 = tf.reduce_sum(tf.square(tf.abs(target))) / tf.reduce_sum(tf.square(tf.abs(target - input)))
+        out0 = 10.0 * tf.log(tmp_snr0) / tf.log(10.0)  # 输入图片的snr
+        return out0
 
     def conv3d(self,x,k,in_channel,out_channel,name):
         with tf.variable_scope(name):
