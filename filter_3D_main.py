@@ -38,7 +38,7 @@ TEST_RESULT_SAVE_PATH = './test_result'
 if not os.path.exists(TEST_RESULT_SAVE_PATH):
     os.mkdir(TEST_RESULT_SAVE_PATH)
 # train/test/onetest/show_kernel/onetest2
-mode = 'train'
+mode = 'onetest2'
 if mode == 'train':
     patch_size = [40, 40, 40]
 elif mode == 'onetest2':
@@ -300,7 +300,7 @@ elif mode == 'onetest':
 
     print 'ok'
 elif mode == 'onetest2':
-    output, _, _, _, _, _, _ = CNNclass.build_model(input, target, True)
+    output, _, _, _, _, _, _ = CNNclass.build_model(input, target, True, bn_select)
     _, _, test_data = load_data(rel_file_path=REL_FILE_PATH,
                                 start_point=start_point,
                                 end_point=end_point,
@@ -312,14 +312,16 @@ elif mode == 'onetest2':
     onedata_test = onedata[:patch_size[0], :patch_size[1], :patch_size[2]]
 
     # normalize to [0,1]
-    max_train_temp = np.max(onedata_test)
-    min_train_temp = np.min(onedata_test)
-    onedata_test = (onedata_test - min_train_temp) / (max_train_temp - min_train_temp)
+    #max_train_temp = np.max(onedata_test)
+    #min_train_temp = np.min(onedata_test)
+    #onedata_test = (onedata_test - min_train_temp) / (max_train_temp - min_train_temp)
 
-    std_train_temp = np.mean(onedata_test)
+    #std_train_temp = np.mean(onedata_test)
+    onedata_test = (onedata_test - np.mean(onedata_test)) / np.std(onedata_test)
 
-    noise_level = random.randint(15, 20) * 1e-2
-    onedata_test_noise = np.random.normal(0, noise_level * std_train_temp, onedata_test.shape) + onedata_test
+    ref = np.max(onedata_test)
+    noise_level = random.randint(5, 10) * 1e-2
+    onedata_test_noise = np.random.normal(0, noise_level * ref, onedata_test.shape) + onedata_test
 
     onedata_test_noise = np.reshape(onedata_test_noise,
                                     [1, np.shape(onedata_test_noise)[0], np.shape(onedata_test_noise)[1],
