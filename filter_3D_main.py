@@ -38,7 +38,7 @@ TEST_RESULT_SAVE_PATH = './test_result'
 if not os.path.exists(TEST_RESULT_SAVE_PATH):
     os.mkdir(TEST_RESULT_SAVE_PATH)
 # train/test/onetest/show_kernel/onetest2/onetest_all_noise_level
-mode = 'onetest_all_noise_level'
+mode = 'train'
 if mode == 'train':
     patch_size = [40, 40, 40]
 elif mode == 'onetest2' or mode == 'onetest_all_noise_level':
@@ -62,7 +62,7 @@ input = tf.placeholder('float32', [None, patch_size[0], patch_size[1], patch_siz
 target = tf.placeholder('float32', [None, patch_size[0], patch_size[1], patch_size[2], 1], name='target')
 
 if mode == 'train':
-        print "tv + l1 loss, conv" + str(n_kernel)
+        print "noise as train target, tv + l1 loss, conv" + str(n_kernel)
         print "bn_select:", bn_select
         print "start point with random"
         print "end_point:", end_point

@@ -120,8 +120,8 @@ class unet_3d_model(object):
                 bn = conv
             relu = tf.nn.relu(bn)
 
-            output = self.conv3d(relu,self.kernel_size,self.num_filter,self.in_channel,'conv12')
-            output_noise = input - output
+            output_noise = self.conv3d(relu,self.kernel_size,self.num_filter,self.in_channel,'conv12')
+            output = input - output_noise
             L1_loss_forward = tf.reduce_mean(tf.abs(output - target))
             pixel_num = self.input_size[0] * self.input_size[1]
             #output_flatten = tf.reduce_sum(output,axis=3)
