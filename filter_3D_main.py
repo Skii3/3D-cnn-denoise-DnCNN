@@ -38,9 +38,9 @@ TEST_RESULT_SAVE_PATH = './test_result'
 if not os.path.exists(TEST_RESULT_SAVE_PATH):
     os.mkdir(TEST_RESULT_SAVE_PATH)
 # train/test/onetest/show_kernel/onetest2/onetest_all_noise_level
-mode = 'train'
+mode = 'onetest_all_noise_level'
 if mode == 'train':
-    patch_size = [40, 40, 40]
+    patch_size = [56, 56, 56]
 elif mode == 'onetest2' or mode == 'onetest_all_noise_level':
     patch_size = [876, 900, 4]
     batch_size = 1
@@ -162,7 +162,7 @@ if mode == 'train':
                 sum_tvDiff_loss = sum_tvDiff_loss + tvDiff_loss
                 sum_L1_loss = sum_L1_loss + L1_loss
                 sum_snr = sum_snr + SNR
-                print("[*] Step %d: all loss: %.8f, tvDiff loss: %.8f, l1 loss: %.8f, snr: %.2f,del_snr: %.5f lr:%.16f") \
+                print("[*] Step %d: all loss: %.8f, tvDiff loss: %.8f, l1 loss: %.8f, snr: %.2f, del_snr: %.5f lr:%.16f") \
                      % (step,tvDiff_loss+L1_loss, tvDiff_loss, L1_loss, SNR, DEL_SNR, lr)
             print ("[*] Epoch [%2d/%2d] %4d time: %4.4fs, sum all loss: %.8f, sum tvDiff loss: %.8f, sum l1 loss: %.8f, sum snr: %.8f") \
                   % (epoch+1,max_epochs,np.shape(data_epoch)[0] // batch_size,
