@@ -37,6 +37,7 @@ if not os.path.exists(MODEL_PATH):
 TEST_RESULT_SAVE_PATH = './test_result'
 if not os.path.exists(TEST_RESULT_SAVE_PATH):
     os.mkdir(TEST_RESULT_SAVE_PATH)
+model_load = True
 # train/test/onetest/show_kernel/onetest2/onetest_all_noise_level
 mode = 'onetest_all_noise_level'
 if mode == 'train':
@@ -96,12 +97,17 @@ if mode == 'train':
         saver = tf.train.Saver()
         merged = tf.summary.merge_all(key='summaries')
         train_writer = tf.summary.FileWriter('./log',sess.graph)
-        sess.run(tf.global_variables_initializer())
+        if model_load == True:
+            ckpt = tf.train.get_checkpoint_state(MODEL_PATH)
+            print ckpt
+            tf.train.Saver().restore(sess, ckpt.model_checkpoint_path)
+        else:
+            sess.run(tf.global_variables_initializer())
 
         g = tf.get_default_graph()
         print("---------------------------training model---------------------------")
         for epoch in range(0, max_epochs + 1):
-            if (epoch) % 20 == 0:
+            if (epoch) % 10 == 0:
                 ind1 = random.randint(0, 99)
                 ind2 = random.randint(0, 15)
                 start_point = [ind1, ind1, ind2]
@@ -397,6 +403,51 @@ elif mode == 'onetest_all_noise_level':
         scipy.misc.imsave(TEST_RESULT_SAVE_PATH + '/%d_%.2fnoisedata.png' % (i, noise_level),
                           np.squeeze(onedata_test_noise[:, :, :, i, 0]))
 
+elif mode == 'onetest_all_noise_level_modify':
+    output, _, _, _, snr, _, _,in_snr = CNNclass.build_model(input, target, True, bn_select)
+    _, _, test_data = load_data(rel_file_path=REL_FILE_PATH,
+                                start_point=start_point,
+                                end_point=end_point,
+                                patch_size=patch_size,
+                                stride=stride,
+                                traindata_save=TRAINDATA_SAVE_PATH)
 
+    onedata = np.concatenate((test_data[0, :, :, :], test_data[1, :, :, :]), axis=2)  # 876*900*160
+    onedata_test = onedata[:patch_size[0], :patch_size[1], :patch_size[2]]
+    onedata_test = (onedata_test - np.mean(onedata_test)) / np.std(onedata_test)
+
+    onedata_test = np.reshape(onedata_test,
+                                [1, np.shape(onedata_test)[0], np.shape(onedata_test)[1],
+                                 np.shape(onedata_test)[2], 1])
+    ref = np.max(onedata_test)
+    sess = tf.Session()
+    ckpt = tf.train.get_checkpoint_state(MODEL_PATH)
+    print ckpt
+    tf.train.Saver().restore(sess, ckpt.model_checkpoint_path)
+    output_snr_sum = 0
+    input_snr_sum = 0
+    del_snr_sum = 0
+    noise_num = 30
+    for noise_level in range(1,noise_num+1,1):
+        onedata_test_noise = np.random.normal(0, noise_level * 1e-2 * ref, onedata_test.shape) + onedata_test
+
+        denoised,_,_ = sess.run([output,snr,in_snr], feed_dict={input: onedata_test_noise, target: onedata_test})
+        i = 0
+        denoised_one = np.squeeze(denoised[:, :, :, i, 0])
+        noise_one = np.squeeze(onedata_test_noise[:, :, :, i, 0])
+        target_one = np.squeeze(onedata_test[0,:, :, i,0])
+
+        tmp_snr0 = np.sum(np.square(np.abs(target_one))) / np.sum(np.square(np.abs(target_one - noise_one)))
+        input_snr = 10.0 * np.log(tmp_snr0) / np.log(10.0)  # 输入图片的snr
+
+        tmp_snr0 = np.sum(np.square(np.abs(target_one))) / np.sum(np.square(np.abs(target_one - denoised_one)))
+        output_snr = 10.0 * np.log(tmp_snr0) / np.log(10.0)  # 输入图片的snr
+
+        print 'noise level: %.2f, input_snr: %.4f, output_snr: %.4f, del_snr: %.4f' %(noise_level,input_snr,output_snr,output_snr-input_snr)
+        scipy.misc.imsave(TEST_RESULT_SAVE_PATH + '/%d_%.2flabel.png' % (i, noise_level), np.squeeze(onedata_test[0,:, :, i,0]))
+        scipy.misc.imsave(TEST_RESULT_SAVE_PATH + '/%d_%.2fmdenoise.png' % (i, noise_level),
+                          np.squeeze(denoised[:, :, :, i, 0]))
+        scipy.misc.imsave(TEST_RESULT_SAVE_PATH + '/%d_%.2fnoisedata.png' % (i, noise_level),
+                          np.squeeze(onedata_test_noise[:, :, :, i, 0]))
 
 
