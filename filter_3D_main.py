@@ -13,7 +13,7 @@ import os
 import random
 from show_data import kernelshow
 #------------------ global settings ------------------#
-REL_FILE_PATH = './plutdata'
+REL_FILE_PATH = './plutdata2'
 TRAINDATA_SAVE_PATH = './traindata_save'
 SAVEPSNR = './savepsnr'
 ind1 = random.randint(0,99)
@@ -38,8 +38,8 @@ if not os.path.exists(MODEL_PATH):
 TEST_RESULT_SAVE_PATH = './test_result'
 if not os.path.exists(TEST_RESULT_SAVE_PATH):
     os.mkdir(TEST_RESULT_SAVE_PATH)
-model_load = True
-# train/test/onetest/show_kernel/onetest2/onetest_all_noise_level/onetest_all_noise_level_modify
+model_load = False
+# train/test/onetest/show_kernel/onetest2/**onetest_all_noise_level/onetest_all_noise_level_modify
 mode = 'onetest_all_noise_level'
 if mode == 'train':
     patch_size = [56, 56, 56]
@@ -376,6 +376,7 @@ elif mode == 'onetest_all_noise_level':
                                 [1, np.shape(onedata_test)[0], np.shape(onedata_test)[1],
                                  np.shape(onedata_test)[2], 1])
     ref = np.max(onedata_test)
+    #ref = np.mean(onedata_test)
     sess = tf.Session()
     ckpt = tf.train.get_checkpoint_state(MODEL_PATH)
     print ckpt
@@ -383,7 +384,7 @@ elif mode == 'onetest_all_noise_level':
     output_snr_sum = 0
     input_snr_sum = 0
     del_snr_sum = 0
-    noise_num = 30
+    noise_num = 10
     for noise_level in range(1,noise_num+1,1):
         onedata_test_noise = np.random.normal(0, noise_level * 1e-2 * ref, onedata_test.shape) + onedata_test
 
@@ -401,9 +402,9 @@ elif mode == 'onetest_all_noise_level':
 
         print 'noise level: %.2f, input_snr: %.4f, output_snr: %.4f, del_snr: %.4f' %(noise_level,input_snr,output_snr,output_snr-input_snr)
 
-        Label = np.squeeze(onedata_test[0,:, :, i,0])
-        Denoise = np.squeeze(denoised[:, :, :, i, 0])
-        Noisedata = np.squeeze(onedata_test_noise[:, :, :, i, 0])
+        Label = target_one
+        Denoise = denoised_one
+        Noisedata = noise_one
 
         # find the minimum of maximum
         max = np.max(Label)

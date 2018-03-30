@@ -21,7 +21,7 @@ def load_data(rel_file_path = './traindata/',
     for file_name in files_name:
         data = sio.loadmat(file_name)
         if index == 1:
-            data_data = data['C']                # 256*256*256
+            data_data = data['C1']                # 256*256*256
         else:
             data_data = data['C2']
         index = index + 1
@@ -95,15 +95,23 @@ def load_data(rel_file_path = './traindata/',
                     '''
 
 
-                    ref = np.max(train_temp)
-                    noise_level = random.randint(1,30) * 1e-2
+                    ref = np.max((train_temp))
+                    noise_level = random.randint(1,10) * 1e-2
                     noise_temp = np.random.normal(0, noise_level * ref, train_temp.shape) + train_temp
 
                     train_data_noise.append(noise_temp)
 
-                    #print '/%d_%d_%d_noisedata.jpg:' %(i,j,k), std_train_temp
-                    #scipy.misc.imsave(traindata_save + '/%d_%d_%d_noisedata.jpg' %(i,j,k), noise_temp[0,:,:])
+                    '''
+                    tmp_snr = np.sum(np.square(np.abs(train_temp))) / np.sum(np.square(np.abs(train_temp - noise_temp)))
+                    out = 10.0 * np.log(tmp_snr) / np.log(10.0)  # 输出图片的snr
+                    print '3d:',out
 
+                    tmp_snr = np.sum(np.square(np.abs(train_temp[0,:,:]))) / np.sum(np.square(np.abs(train_temp[0,:,:] - noise_temp[0,:,:])))
+                    out = 10.0 * np.log(tmp_snr) / np.log(10.0)  # 输出图片的snr
+                    print '2d:', out
+                    #print '/%d_%d_%d_noisedata.jpg:' %(i,j,k), std_train_temp
+                    scipy.misc.imsave(traindata_save + '/%d_%d_%d_noisedata.jpg' %(i,j,k), noise_temp[0,:,:])
+                    '''
         test_data.append(data_data[:,:,end_point[2]:])
 
     train_data = np.array(train_data)
